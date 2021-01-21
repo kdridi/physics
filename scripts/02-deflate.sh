@@ -5,11 +5,10 @@ set -x
 
 cd $(dirname $0)/..
 
-rm -rf tmp
-mkdir tmp
-cd tmp
+cd vendor/github.com/ebiggers/libdeflate.git
 
-make -C ../vendor/github.com/ebiggers/libdeflate.git install PREFIX=$(pwd)/../system
+make PREFIX=$(pwd)/../system -j8 realclean
+make PREFIX=$(pwd)/../system -j8 all
+make PREFIX=$(pwd)/../system -j8 install
 
 cd -
-rm -rf tmp
