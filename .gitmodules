@@ -1,3 +1,6 @@
 [submodule "vendor/github.com/erincatto/box2d.git"]
 	path = vendor/github.com/erincatto/box2d.git
 	url = git@github.com:erincatto/box2d.git
+[submodule "vendor/github.com/zaphoyd/websocketpp.git"]
+	path = vendor/github.com/zaphoyd/websocketpp.git
+	url = git@github.com:zaphoyd/websocketpp.git
