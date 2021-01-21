@@ -4,3 +4,6 @@
 [submodule "vendor/github.com/zaphoyd/websocketpp.git"]
 	path = vendor/github.com/zaphoyd/websocketpp.git
 	url = git@github.com:zaphoyd/websocketpp.git
+[submodule "vendor/github.com/machinezone/IXWebSocket.git"]
+	path = vendor/github.com/machinezone/IXWebSocket.git
+	url = git@github.com:machinezone/IXWebSocket.git
