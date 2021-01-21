@@ -7,3 +7,6 @@
 [submodule "vendor/github.com/machinezone/IXWebSocket.git"]
 	path = vendor/github.com/machinezone/IXWebSocket.git
 	url = git@github.com:machinezone/IXWebSocket.git
+[submodule "vendor/github.com/ebiggers/libdeflate.git"]
+	path = vendor/github.com/ebiggers/libdeflate.git
+	url = git@github.com:ebiggers/libdeflate.git
