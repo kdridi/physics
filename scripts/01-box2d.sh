@@ -16,7 +16,7 @@ cmake ../vendor/github.com/erincatto/box2d.git  \
 	-DBOX2D_USER_SETTINGS=OFF \
 	-DBUILD_SHARED_LIBS=OFF \
 	-DCMAKE_BUILD_TYPE=Debug \
-	-DCMAKE_INSTALL_PREFIX=$(pwd)/../system
+	-DCMAKE_INSTALL_PREFIX=$(pwd)/../system/${PLATFORM}
 
 make VERBOSE=1 -j8
 make install
