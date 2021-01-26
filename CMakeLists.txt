@@ -11,7 +11,7 @@ endfunction()
 
 project(GGJ2021)
 
-set (CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(LIB64 "lib64")
@@ -30,7 +30,9 @@ find_package(ixwebsocket REQUIRED)
 set(EXECUTABLE_NAME "GGJ2021")
 
 add_executable(${EXECUTABLE_NAME}
-	src/main.cpp
+src/file_utils.cpp
+src/file_utils.hpp
+src/main.cpp
 )
 
 target_link_libraries(${EXECUTABLE_NAME}
