@@ -5,6 +5,8 @@ set -x
 
 cd $(dirname $0)/..
 
+scripts/XX-protobuf.sh
+
 rm -rf system/$(uname)/xcode
 mkdir -p system/$(uname)/xcode
 cd system/$(uname)/xcode

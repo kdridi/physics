@@ -5,6 +5,8 @@ set -x
 
 cd $(dirname $0)/..
 
+scripts/XX-protobuf.sh
+
 rm -rf system/$(uname)/makefile
 mkdir -p system/$(uname)/makefile
 cd system/$(uname)/makefile

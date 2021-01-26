@@ -1,3 +1,6 @@
 system/
 tmp/
 .vscode/
+src/proto/
+assets/public/proto/
+*.out

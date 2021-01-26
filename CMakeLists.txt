@@ -14,9 +14,15 @@ project(GGJ2021)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -g3 -fsanitize=address")
 set(LIB64 "lib64")
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
-  set(LIB64 "lib")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -fsanitize=leak")
+endif()
+
+set(LIB64 "lib")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+  set(LIB64 "lib64")
 endif()
 echo_all_cmake_variable_values()
 
@@ -26,16 +32,21 @@ find_package(box2d REQUIRED)
 set(ixwebsocket_DIR "${CMAKE_SOURCE_DIR}/system/${CMAKE_SYSTEM_NAME}/lib/cmake/ixwebsocket")
 find_package(ixwebsocket REQUIRED)
 
+set(protobuf_DIR "${CMAKE_SOURCE_DIR}/system/${CMAKE_SYSTEM_NAME}/${LIB64}/cmake/protobuf")
+find_package(protobuf CONFIG REQUIRED)
 
 set(EXECUTABLE_NAME "GGJ2021")
 
 add_executable(${EXECUTABLE_NAME}
-src/file_utils.cpp
-src/file_utils.hpp
-src/main.cpp
+  src/proto/box2d.pb.h
+  src/proto/box2d.pb.cc
+  src/file_utils.cpp
+  src/file_utils.hpp
+  src/main.cpp
 )
 
 target_link_libraries(${EXECUTABLE_NAME}
   box2d::box2d
   ixwebsocket::ixwebsocket
+  protobuf::libprotobuf
 )

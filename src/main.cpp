@@ -70,6 +70,17 @@ static void httpStart(int port, const char *hostname)
             return response;
         }
 
+        if (request->uri.compare("/proto/box2d.proto") == 0)
+        {
+            ix::WebSocketHttpHeaders headers{};
+            headers["Content-Type"] = "text/plain;charset=UTF-8";
+
+            std::string payload = FileUtils::GetInstance().getFileContent("/public/proto/box2d.proto");
+
+            auto response = std::make_shared<ix::HttpResponse>(200, "OK", ix::HttpErrorCode::Ok, headers, payload);
+            return response;
+        }
+
         if (true)
         {
             ix::WebSocketHttpHeaders headers{};
@@ -94,7 +105,7 @@ static void httpStart(int port, const char *hostname)
     }
 }
 
-static std::map<std::string, std::weak_ptr<ix::WebSocket>> clients;
+static std::map<std::string, std::shared_ptr<ix::WebSocket>> clients;
 // static std::map<std::weak_ptr<ix::WebSocket>, std::list<std::string> *> actions;
 
 static void wsStart(int port, const char *hostname)
@@ -105,7 +116,7 @@ static void wsStart(int port, const char *hostname)
     server.setOnConnectionCallback([](std::weak_ptr<ix::WebSocket> ptr, std::shared_ptr<ix::ConnectionState> st) {
         if (auto ws = ptr.lock())
         {
-            ws->setOnMessageCallback([st, ptr](const ix::WebSocketMessagePtr &msg) -> void {
+            ws->setOnMessageCallback([st, ws](const ix::WebSocketMessagePtr &msg) -> void {
                 switch (msg->type)
                 {
                 case ix::WebSocketMessageType::Message:
@@ -119,6 +130,7 @@ static void wsStart(int port, const char *hostname)
                 }
                 case ix::WebSocketMessageType::Open:
                 {
+                    std::string key{msg->str.c_str()};
                     std::cout << "received Open: " << std::endl;
                     std::cout << "State ID: " << st->getId() << std::endl;
                     std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
@@ -127,8 +139,8 @@ static void wsStart(int port, const char *hostname)
                     std::cout << "\tprotocol: " << msg->openInfo.protocol << std::endl;
                     for (auto header : msg->openInfo.headers)
                         std::cout << "\theader[\"" << header.first << "\"] = \"" << header.second << "\"" << std::endl;
-                    clients[msg->str] = ptr;
                     // actions[ptr] = new std::list<std::string>{};
+                    clients[key] = ws;
                     break;
                 }
                 case ix::WebSocketMessageType::Close:
@@ -202,60 +214,179 @@ static void wsStart(int port, const char *hostname)
     }
 }
 
+#include "proto/box2d.pb.h"
+
+class Draw : public b2Draw
+{
+public:
+    Draw()
+    {
+    }
+
+    virtual ~Draw()
+    {
+    }
+
+public:
+    virtual void DrawPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)
+    {
+        std::cout << "DrawPolygon" << std::endl;
+    }
+
+    virtual void DrawSolidPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)
+    {
+        std::cout << "DrawSolidPolygon" << std::endl;
+    }
+
+    virtual void DrawCircle(const b2Vec2 &center, float radius, const b2Color &color)
+    {
+        std::cout << "DrawCircle" << std::endl;
+    }
+
+    virtual void DrawSolidCircle(const b2Vec2 &center, float radius, const b2Vec2 &axis, const b2Color &color)
+    {
+        std::cout << "DrawSolidCircle" << std::endl;
+    }
+
+    virtual void DrawSegment(const b2Vec2 &p1, const b2Vec2 &p2, const b2Color &color)
+    {
+        std::cout << "DrawSegment" << std::endl;
+    }
+
+    virtual void DrawTransform(const b2Transform &xf)
+    {
+        std::cout << "DrawTransform" << std::endl;
+    }
+
+    virtual void DrawPoint(const b2Vec2 &p, float size, const b2Color &color)
+    {
+        std::cout << "DrawPoint" << std::endl;
+    }
+};
+
 static void worldStart(void)
 {
-    b2Vec2 gravity{0.0, -9.8};
+    b2Vec2 gravity;
+    gravity.Set(0.0f, -10.0f);
     b2World world{gravity};
 
     b2Body *player = nullptr;
 
+    b2Body *ground = NULL;
     {
-        b2BodyDef def;
-        def.type = b2BodyType::b2_staticBody;
-        def.position.Set(400.0f, 50.0f);
+        b2BodyDef bd;
+        ground = world.CreateBody(&bd);
 
-        b2PolygonShape shape;
-        shape.SetAsBox(800.0f, 100.0f);
-
-        b2Body *body = world.CreateBody(&def);
-        body->CreateFixture(&shape, 0.0f);
+        b2EdgeShape shape;
+        shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
+        ground->CreateFixture(&shape, 0.0f);
     }
 
     {
-        b2BodyDef def;
-        def.type = b2BodyType::b2_dynamicBody;
-        def.position.Set(400.0f, 300.0f);
+        b2Body *prevBody = ground;
 
-        b2PolygonShape shape;
-        shape.SetAsBox(1.0f, 1.0f);
+        // Define crank.
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(0.5f, 2.0f);
 
-        b2FixtureDef fixture;
-        fixture.shape = &shape;
-        fixture.density = 10.0f;
-        fixture.friction = 0.3f;
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 7.0f);
+            b2Body *body = world.CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
 
-        b2Body *body = world.CreateBody(&def);
-        body->CreateFixture(&fixture);
+            b2RevoluteJointDef rjd;
+            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 5.0f));
+            rjd.motorSpeed = 1.0f * b2_pi;
+            rjd.maxMotorTorque = 10000.0f;
+            rjd.enableMotor = true;
+            b2RevoluteJoint *m_joint1 = (b2RevoluteJoint *)world.CreateJoint(&rjd);
 
-        player = body;
+            prevBody = body;
+        }
+
+        // Define follower.
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(0.5f, 4.0f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 13.0f);
+            b2Body *body = world.CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+
+            b2RevoluteJointDef rjd;
+            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 9.0f));
+            rjd.enableMotor = false;
+            world.CreateJoint(&rjd);
+
+            prevBody = body;
+        }
+
+        // Define piston
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(1.5f, 1.5f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.fixedRotation = true;
+            bd.position.Set(0.0f, 17.0f);
+            b2Body *body = world.CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+
+            b2RevoluteJointDef rjd;
+            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 17.0f));
+            world.CreateJoint(&rjd);
+
+            b2PrismaticJointDef pjd;
+            pjd.Initialize(ground, body, b2Vec2(0.0f, 17.0f), b2Vec2(0.0f, 1.0f));
+
+            pjd.maxMotorForce = 1000.0f;
+            pjd.enableMotor = true;
+
+            b2PrismaticJoint *m_joint2 = (b2PrismaticJoint *)world.CreateJoint(&pjd);
+        }
+
+        // Create a payload
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(1.5f, 1.5f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 23.0f);
+            b2Body *body = world.CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+
+            player = body;
+        }
     }
+
+    Draw debugDraw{};
+    world.SetDebugDraw(&debugDraw);
+    debugDraw.SetFlags(b2Draw::e_shapeBit);
+
+    ggj2021::Player p;
 
     bool running = true;
     while (running)
     {
         const b2Vec2 &position = player->GetPosition();
+        p.set_x(position.x);
+        p.set_y(position.y);
+        p.set_msg("Hello, world!");
 
         std::stringstream ss;
         ss << position.x << std::endl
            << position.y << std::endl;
 
+        //        world.DebugDraw();
+
         for (auto client : clients)
-        {
-            if (auto ws = client.second.lock())
-            {
-                ws->sendText(ss.str());
-            }
-        }
+            client.second->sendBinary(p.SerializeAsString());
 
         // std::cout << "update world" << std::endl;
         world.Step(.015f, 10, 10);

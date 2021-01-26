@@ -10,3 +10,6 @@
 [submodule "vendor/github.com/ebiggers/libdeflate.git"]
 	path = vendor/github.com/ebiggers/libdeflate.git
 	url = git@github.com:ebiggers/libdeflate.git
+[submodule "vendor/github.com/protocolbuffers/protobuf.git"]
+	path = vendor/github.com/protocolbuffers/protobuf.git
+	url = git@github.com:protocolbuffers/protobuf.git

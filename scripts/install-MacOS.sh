@@ -11,6 +11,7 @@ rm -rf system/${PLATFORM}
 scripts/01-box2d.sh
 scripts/02-deflate.sh
 scripts/03-IXWebSocket.sh
+scripts/04-protobuf.sh
 
 sed -i -e 's,-framework foundation;-framework security,-framework Foundation;-framework Security,' \
     system/${PLATFORM}/lib/cmake/ixwebsocket/ixwebsocket-config.cmake
