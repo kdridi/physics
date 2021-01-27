@@ -1,8 +1,52 @@
-syntax = "proto3";
+syntax = "proto2";
 package ggj2021;
 
-message Player {
-    float x = 1;
-    float y = 2;
-    string msg = 3;
+message b2Color {
+    required float r = 1;
+    required float g = 2;
+    required float b = 3;
+    required float a = 4;
+}
+
+message b2Vec2 {
+    required float x = 1;
+    required float y = 2;
+}
+
+message b2Polygon {
+    required bool solid = 1;
+    repeated b2Vec2 vertices = 2;
+    required b2Color color = 3;
+}
+
+message b2Circle {
+    required bool solid = 1;
+    required b2Vec2 center = 2;
+    required float radius = 3;
+    required b2Color color = 4;
+}
+
+message b2Segment {
+    required b2Vec2 p1 = 1;
+    required b2Vec2 p2 = 2;
+    required b2Color color = 3;
+}
+
+message b2Transform {
+    required b2Vec2 position = 1;
+    required float angle = 2;
+}
+
+message b2Point {
+    required b2Vec2 position = 1;
+    required float size = 2;
+    required b2Color color = 3;
+}
+
+message b2World {
+    repeated b2Polygon polygons = 1;
+    repeated b2Circle circles = 2;
+    repeated b2Segment segments = 3;
+    repeated b2Transform transforms = 4;
+    repeated b2Point points = 5;
 }

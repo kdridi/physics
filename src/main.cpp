@@ -139,7 +139,6 @@ static void wsStart(int port, const char *hostname)
                     std::cout << "\tprotocol: " << msg->openInfo.protocol << std::endl;
                     for (auto header : msg->openInfo.headers)
                         std::cout << "\theader[\"" << header.first << "\"] = \"" << header.second << "\"" << std::endl;
-                    // actions[ptr] = new std::list<std::string>{};
                     clients[key] = ws;
                     break;
                 }
@@ -152,9 +151,6 @@ static void wsStart(int port, const char *hostname)
                     std::cout << "\tcode: " << msg->closeInfo.code << std::endl;
                     std::cout << "\treason: " << msg->closeInfo.reason << std::endl;
                     std::cout << "\tremote: " << (msg->closeInfo.remote ? "true" : "false") << std::endl;
-                    // actions.erase(clients[msg->str]);
-                    // delete actions[clients[msg->str]];
-                    // actions.erase(clients[msg->str]);
                     clients.erase(msg->str);
                     break;
                 }
@@ -227,40 +223,110 @@ public:
     {
     }
 
+    ggj2021::b2World *world;
+
 public:
     virtual void DrawPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)
     {
-        std::cout << "DrawPolygon" << std::endl;
+        ggj2021::b2Polygon *polygon = world->add_polygons();
+        polygon->set_solid(false);
+        for (int32 i = 0; i < vertexCount; i++)
+        {
+            ggj2021::b2Vec2 *v = polygon->add_vertices();
+            v->set_x(vertices[i].x);
+            v->set_y(vertices[i].y);
+        }
+        ggj2021::b2Color *polygon_color = polygon->mutable_color();
+        polygon_color->set_r(color.r);
+        polygon_color->set_g(color.g);
+        polygon_color->set_b(color.b);
+        polygon_color->set_a(color.a);
     }
 
     virtual void DrawSolidPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)
     {
-        std::cout << "DrawSolidPolygon" << std::endl;
+        ggj2021::b2Polygon *polygon = world->add_polygons();
+        polygon->set_solid(true);
+        for (int32 i = 0; i < vertexCount; i++)
+        {
+            ggj2021::b2Vec2 *v = polygon->add_vertices();
+            v->set_x(vertices[i].x);
+            v->set_y(vertices[i].y);
+        }
+        ggj2021::b2Color *polygon_color = polygon->mutable_color();
+        polygon_color->set_r(color.r);
+        polygon_color->set_g(color.g);
+        polygon_color->set_b(color.b);
+        polygon_color->set_a(color.a);
     }
 
     virtual void DrawCircle(const b2Vec2 &center, float radius, const b2Color &color)
     {
-        std::cout << "DrawCircle" << std::endl;
+        ggj2021::b2Circle *circle = world->add_circles();
+        circle->set_solid(false);
+        circle->set_radius(radius);
+        ggj2021::b2Vec2 *circle_center = circle->mutable_center();
+        circle_center->set_x(center.x);
+        circle_center->set_y(center.y);
+        ggj2021::b2Color *circle_color = circle->mutable_color();
+        circle_color->set_r(color.r);
+        circle_color->set_g(color.g);
+        circle_color->set_b(color.b);
+        circle_color->set_a(color.a);
     }
 
     virtual void DrawSolidCircle(const b2Vec2 &center, float radius, const b2Vec2 &axis, const b2Color &color)
     {
-        std::cout << "DrawSolidCircle" << std::endl;
+        ggj2021::b2Circle *circle = world->add_circles();
+        circle->set_solid(true);
+        circle->set_radius(radius);
+        ggj2021::b2Vec2 *circle_center = circle->mutable_center();
+        circle_center->set_x(center.x);
+        circle_center->set_y(center.y);
+        ggj2021::b2Color *circle_color = circle->mutable_color();
+        circle_color->set_r(color.r);
+        circle_color->set_g(color.g);
+        circle_color->set_b(color.b);
+        circle_color->set_a(color.a);
     }
 
     virtual void DrawSegment(const b2Vec2 &p1, const b2Vec2 &p2, const b2Color &color)
     {
-        std::cout << "DrawSegment" << std::endl;
+        ggj2021::b2Segment *segment = world->add_segments();
+        ggj2021::b2Vec2 *segment_p1 = segment->mutable_p1();
+        segment_p1->set_x(p1.x);
+        segment_p1->set_y(p1.y);
+        ggj2021::b2Vec2 *segment_p2 = segment->mutable_p2();
+        segment_p2->set_x(p2.x);
+        segment_p2->set_y(p2.y);
+        ggj2021::b2Color *segment_color = segment->mutable_color();
+        segment_color->set_r(color.r);
+        segment_color->set_g(color.g);
+        segment_color->set_b(color.b);
+        segment_color->set_a(color.a);
     }
 
     virtual void DrawTransform(const b2Transform &xf)
     {
-        std::cout << "DrawTransform" << std::endl;
+        ggj2021::b2Transform *transform = world->add_transforms();
+        transform->set_angle(xf.q.GetAngle());
+        ggj2021::b2Vec2 *transform_position = transform->mutable_position();
+        transform_position->set_x(xf.p.x);
+        transform_position->set_y(xf.p.y);
     }
 
     virtual void DrawPoint(const b2Vec2 &p, float size, const b2Color &color)
     {
-        std::cout << "DrawPoint" << std::endl;
+        ggj2021::b2Point *circle = world->add_points();
+        circle->set_size(size);
+        ggj2021::b2Vec2 *circle_p = circle->mutable_position();
+        circle_p->set_x(p.x);
+        circle_p->set_y(p.y);
+        ggj2021::b2Color *circle_color = circle->mutable_color();
+        circle_color->set_r(color.r);
+        circle_color->set_g(color.g);
+        circle_color->set_b(color.b);
+        circle_color->set_a(color.a);
     }
 };
 
@@ -369,26 +435,22 @@ static void worldStart(void)
     world.SetDebugDraw(&debugDraw);
     debugDraw.SetFlags(b2Draw::e_shapeBit);
 
-    ggj2021::Player p;
-
     bool running = true;
     while (running)
     {
-        const b2Vec2 &position = player->GetPosition();
-        p.set_x(position.x);
-        p.set_y(position.y);
-        p.set_msg("Hello, world!");
+        ggj2021::b2World w;
+        debugDraw.world = &w;
+        world.DebugDraw();
 
-        std::stringstream ss;
-        ss << position.x << std::endl
-           << position.y << std::endl;
-
-        //        world.DebugDraw();
-
+        int size = 0;
+        std::string s = w.SerializeAsString();
         for (auto client : clients)
-            client.second->sendBinary(p.SerializeAsString());
+        {
+            client.second->sendBinary(s);
+            size += s.size();
+        }
 
-        // std::cout << "update world" << std::endl;
+        std::cout << "update world : " << size << std::endl;
         world.Step(.015f, 10, 10);
         std::this_thread::sleep_for(std::chrono::milliseconds(15));
     }

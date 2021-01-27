@@ -1,13 +1,13 @@
 let socket = null
-let player = null
+let world = null
 
 function setup() {
 	createCanvas(800, 600)
-	player = null
+	world = null
 
 	protobuf.load('proto/box2d.proto', (error, root) => {
 		if (error === null) {
-			window.Player = root.lookupType('ggj2021.Player')
+			window.b2World = root.lookupType('ggj2021.b2World')
 
 			socket = new WebSocket(`ws://${window.location.hostname}:9091`)
 
@@ -20,10 +20,7 @@ function setup() {
 			socket.addEventListener('message', (...args) => {
 				const { data } = args.shift()
 				data.arrayBuffer().then((buffer) => {
-					const { x, y } = Player.decode(new Uint8Array(buffer))
-					player = player || {}
-					player.x = x * 10 + 400
-					player.y = 600 - 10 * y
+					world = b2World.decode(new Uint8Array(buffer))
 				})
 			})
 			socket.addEventListener('open', (...args) => {
@@ -34,11 +31,41 @@ function setup() {
 }
 
 function draw() {
-	background(255, 0, 0)
+	background(0)
 
-	if (player !== null) {
-		// console.log(player)
-		ellipse(player.x, player.y, 10)
+	const w2p = (vec) => {
+		console.log(vec)
+		const x = vec.x * 10 + 400
+		const y = 600 - 10 * vec.y
+		return { x, y }
+	}
+
+	if (world !== null) {
+		// console.log(world)
+		world.circles.forEach(({ center }) => {
+			const { x, y } = w2p(center)
+			ellipse(x, y, 10)
+		})
+		world.points.forEach(({ position }) => {
+			const { x, y } = w2p(position)
+			ellipse(x, y, 10)
+		})
+		world.polygons.forEach(({ vertices }) => {
+			vertices.forEach((vertice) => {
+				const { x, y } = w2p(vertice)
+				ellipse(x, y, 10)
+			})
+		})
+		world.segments.forEach(({ p1, p2 }) => {
+			{
+				const { x, y } = w2p(p1)
+				ellipse(x, y, 10)
+			}
+			{
+				const { x, y } = w2p(p2)
+				ellipse(x, y, 10)
+			}
+		})
 	}
 }
 
