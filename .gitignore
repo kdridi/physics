@@ -4,3 +4,4 @@ tmp/
 src/proto/
 assets/public/proto/
 *.out
+settings.ini
