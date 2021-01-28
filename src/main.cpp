@@ -130,28 +130,43 @@ static void wsStart(int port, const char *hostname)
                 }
                 case ix::WebSocketMessageType::Open:
                 {
-                    std::string key{msg->str.c_str()};
+                    std::stringstream key;
+                    key << st->getRemoteIp();
+                    key << ":";
+                    key << st->getRemotePort();
+
                     std::cout << "received Open: " << std::endl;
                     std::cout << "State ID: " << st->getId() << std::endl;
+                    std::cout << "getRemoteIp: " << st->getRemoteIp() << std::endl;
+                    std::cout << "getRemotePort: " << st->getRemotePort() << std::endl;
                     std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
                     std::cout << "\tstr: " << msg->str << std::endl;
                     std::cout << "\turi: " << msg->openInfo.uri << std::endl;
                     std::cout << "\tprotocol: " << msg->openInfo.protocol << std::endl;
                     for (auto header : msg->openInfo.headers)
                         std::cout << "\theader[\"" << header.first << "\"] = \"" << header.second << "\"" << std::endl;
-                    clients[key] = ws;
+                    clients[key.str()] = ws;
                     break;
                 }
                 case ix::WebSocketMessageType::Close:
                 {
+                    std::stringstream key;
+                    key << st->getRemoteIp();
+                    key << ":";
+                    key << st->getRemotePort();
+
                     std::cout << "received Close: " << std::endl;
                     std::cout << "State ID: " << st->getId() << std::endl;
+                    std::cout << "getRemoteIp: " << st->getRemoteIp() << std::endl;
+                    std::cout << "getRemotePort: " << st->getRemotePort() << std::endl;
                     std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
                     std::cout << "\tstr: " << msg->str << std::endl;
                     std::cout << "\tcode: " << msg->closeInfo.code << std::endl;
                     std::cout << "\treason: " << msg->closeInfo.reason << std::endl;
                     std::cout << "\tremote: " << (msg->closeInfo.remote ? "true" : "false") << std::endl;
-                    clients.erase(msg->str);
+                    auto it = clients.find(key.str());
+                    assert(it != clients.end());
+                    clients.erase(key.str());
                     break;
                 }
                 case ix::WebSocketMessageType::Error:
@@ -336,8 +351,6 @@ static void worldStart(void)
     gravity.Set(0.0f, -10.0f);
     b2World world{gravity};
 
-    b2Body *player = nullptr;
-
     b2Body *ground = NULL;
     {
         b2BodyDef bd;
@@ -367,7 +380,7 @@ static void worldStart(void)
             rjd.motorSpeed = 1.0f * b2_pi;
             rjd.maxMotorTorque = 10000.0f;
             rjd.enableMotor = true;
-            b2RevoluteJoint *m_joint1 = (b2RevoluteJoint *)world.CreateJoint(&rjd);
+            world.CreateJoint(&rjd);
 
             prevBody = body;
         }
@@ -413,7 +426,7 @@ static void worldStart(void)
             pjd.maxMotorForce = 1000.0f;
             pjd.enableMotor = true;
 
-            b2PrismaticJoint *m_joint2 = (b2PrismaticJoint *)world.CreateJoint(&pjd);
+            world.CreateJoint(&pjd);
         }
 
         // Create a payload
@@ -426,8 +439,6 @@ static void worldStart(void)
             bd.position.Set(0.0f, 23.0f);
             b2Body *body = world.CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
-
-            player = body;
         }
     }
 
@@ -450,9 +461,9 @@ static void worldStart(void)
             size += s.size();
         }
 
-        std::cout << "update world : " << size << std::endl;
-        world.Step(.015f, 10, 10);
-        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        std::cout << "update world : " << size << ", count: " << clients.size() << std::endl;
+        world.Step(.030f, 10, 10);
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
 

@@ -2,7 +2,7 @@ let socket = null
 let world = null
 
 function setup() {
-	createCanvas(800, 600)
+	createCanvas(800, 600, WEBGL)
 	world = null
 
 	protobuf.load('proto/box2d.proto', (error, root) => {
@@ -34,9 +34,9 @@ function draw() {
 	background(0)
 
 	const w2p = (vec) => {
-		console.log(vec)
-		const x = vec.x * 10 + 400
-		const y = 600 - 10 * vec.y
+		// console.log(vec)
+		const x = 0 + vec.x * 9
+		const y = 280 - vec.y * 9
 		return { x, y }
 	}
 
@@ -50,11 +50,22 @@ function draw() {
 			const { x, y } = w2p(position)
 			ellipse(x, y, 10)
 		})
-		world.polygons.forEach(({ vertices }) => {
+		world.polygons.forEach((polygon) => {
+			const {
+				solid,
+				vertices,
+				color: { r, g, b, a },
+			} = polygon
+			fill.apply(
+				this,
+				[r, g, b, a].map((x) => Math.floor(x * 256))
+			)
+			beginShape()
 			vertices.forEach((vertice) => {
 				const { x, y } = w2p(vertice)
-				ellipse(x, y, 10)
+				vertex(x, y)
 			})
+			endShape(CLOSE)
 		})
 		world.segments.forEach(({ p1, p2 }) => {
 			{
