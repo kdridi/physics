@@ -1,7 +1,4 @@
-FROM epitechcontent/epitest-docker
+FROM fedora:32
 LABEL maintainer="Karim DRIDI <karim.dridi@gmail.com>"
 
-RUN dnf install -y cloc file jq emacs gdb vim libasan-static libasan man-pages man-pages-fr --setopt='tsflags='
-RUN dnf install -y meson ninja-build inotify-tools freealut-devel htop moreutils doxygen libXinerama-devel libXrandr-devel libXcursor-devel libXi-devel libXinerama-devel
-
-RUN mandb
+RUN dnf install -y gdb vim libasan-static libasan libXinerama-devel libXrandr-devel libXcursor-devel libXi-devel libXinerama-devel
