@@ -1,4 +1,50 @@
-Next Docker Ubuntu
+# Compilation and launch with docker
 
-apt update
-apt install -y cmake build-essential libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libssl-dev zlib1g-dev git vim-nox
+```sh
+git clone https://github.com/kdridi/physics.git
+cd physics/
+git submodule update --init --recursive
+docker build -t kdridi/ggj2021 .
+docker run --rm --name ggj2021 -it -v $PWD:/mnt -w /mnt -p 9090:9090 -p 9091:9091 kdridi/ggj2021 bash
+scripts/install-Linux.sh
+scripts/XX-makefile.sh
+```
+
+# Compilation and launch with fedora
+
+```sh
+sudo dnf install -y gdb vim libasan-static libasan libXinerama-devel libXrandr-devel libXcursor-devel libXi-devel libXinerama-devel git cmake clang openssl-devel zlib-devel
+
+git clone https://github.com/kdridi/physics.git
+cd physics/
+git submodule update --init --recursive
+
+scripts/install-Linux.sh
+scripts/XX-makefile.sh
+```
+
+# Compilation and launch with MacOS
+
+```sh
+brew install cmake
+
+git clone https://github.com/kdridi/physics.git
+cd physics/
+git submodule update --init --recursive
+
+scripts/install-MacOC.sh
+scripts/XX-makefile.sh
+```
+
+# Compilation and development with MacOS/XCode
+
+```sh
+brew install cmake
+
+git clone https://github.com/kdridi/physics.git
+cd physics/
+git submodule update --init --recursive
+
+scripts/install-MacOC.sh
+scripts/XX-xcode.sh
+```
