@@ -105,8 +105,10 @@ static void httpStart(int port, const char *hostname)
     }
 }
 
+static b2World *world = nullptr;
+
 static std::map<std::string, std::shared_ptr<ix::WebSocket>> clients;
-// static std::map<std::weak_ptr<ix::WebSocket>, std::list<std::string> *> actions;
+static std::map<std::string, b2Body*> players;
 
 static void wsStart(int port, const char *hostname)
 {
@@ -121,11 +123,39 @@ static void wsStart(int port, const char *hostname)
                 {
                 case ix::WebSocketMessageType::Message:
                 {
+                    std::stringstream key;
+                    key << st->getRemoteIp();
+                    key << ":";
+                    key << st->getRemotePort();
+                    
                     std::cout << "received Message: " << std::endl;
                     std::cout << "State ID: " << st->getId() << std::endl;
                     std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
                     std::cout << "\tstr: " << msg->str << std::endl;
                     // actions[ptr]->push_back(msg->str);
+                    
+                    const std::string prefix{"keyPressed: "};
+                    if (msg->str.compare(0, prefix.size(), prefix.c_str()) == 0) {
+                        const std::string suffix{msg->str.c_str() + prefix.size()};
+                        std::cout << "KEY: [" << suffix << "]" << std::endl;
+                        if (suffix.compare("ArrowUp") == 0) {
+                            auto body = players[key.str()];
+                            b2Vec2 force{0.0f, 200.0f};
+                            b2Vec2 point = body->GetPosition();
+                            body->ApplyLinearImpulseToCenter(force, true);
+                        } else if (suffix.compare("ArrowLeft") == 0) {
+                            auto body = players[key.str()];
+                            b2Vec2 force{-200.0f, 0.0f};
+                            b2Vec2 point = body->GetPosition();
+                            body->ApplyLinearImpulseToCenter(force, true);
+                        } else if (suffix.compare("ArrowRight") == 0) {
+                            auto body = players[key.str()];
+                            b2Vec2 force{ 200.0f, 0.0f};
+                            b2Vec2 point = body->GetPosition();
+                            body->ApplyLinearImpulseToCenter(force, true);
+                        }
+                    }
+                    
                     break;
                 }
                 case ix::WebSocketMessageType::Open:
@@ -146,6 +176,20 @@ static void wsStart(int port, const char *hostname)
                     for (auto header : msg->openInfo.headers)
                         std::cout << "\theader[\"" << header.first << "\"] = \"" << header.second << "\"" << std::endl;
                     clients[key.str()] = ws;
+                    
+                    {
+                        b2PolygonShape shape;
+                        shape.SetAsBox(1.5f, 1.5f);
+
+                        b2BodyDef bd;
+                        bd.type = b2_dynamicBody;
+                        bd.position.Set(-10.0f, 23.0f);
+                        b2Body *body = world->CreateBody(&bd);
+                        body->CreateFixture(&shape, 2.0f);
+                        
+                        players[key.str()] = body;
+                    }
+                    
                     break;
                 }
                 case ix::WebSocketMessageType::Close:
@@ -349,12 +393,12 @@ static void worldStart(void)
 {
     b2Vec2 gravity;
     gravity.Set(0.0f, -10.0f);
-    b2World world{gravity};
+    world = new b2World{gravity};
 
     b2Body *ground = NULL;
     {
         b2BodyDef bd;
-        ground = world.CreateBody(&bd);
+        ground = world->CreateBody(&bd);
 
         b2EdgeShape shape;
         shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
@@ -372,7 +416,7 @@ static void worldStart(void)
             b2BodyDef bd;
             bd.type = b2_dynamicBody;
             bd.position.Set(0.0f, 7.0f);
-            b2Body *body = world.CreateBody(&bd);
+            b2Body *body = world->CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
 
             b2RevoluteJointDef rjd;
@@ -380,7 +424,7 @@ static void worldStart(void)
             rjd.motorSpeed = 1.0f * b2_pi;
             rjd.maxMotorTorque = 10000.0f;
             rjd.enableMotor = true;
-            world.CreateJoint(&rjd);
+            world->CreateJoint(&rjd);
 
             prevBody = body;
         }
@@ -393,13 +437,13 @@ static void worldStart(void)
             b2BodyDef bd;
             bd.type = b2_dynamicBody;
             bd.position.Set(0.0f, 13.0f);
-            b2Body *body = world.CreateBody(&bd);
+            b2Body *body = world->CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
 
             b2RevoluteJointDef rjd;
             rjd.Initialize(prevBody, body, b2Vec2(0.0f, 9.0f));
             rjd.enableMotor = false;
-            world.CreateJoint(&rjd);
+            world->CreateJoint(&rjd);
 
             prevBody = body;
         }
@@ -413,12 +457,12 @@ static void worldStart(void)
             bd.type = b2_dynamicBody;
             bd.fixedRotation = true;
             bd.position.Set(0.0f, 17.0f);
-            b2Body *body = world.CreateBody(&bd);
+            b2Body *body = world->CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
 
             b2RevoluteJointDef rjd;
             rjd.Initialize(prevBody, body, b2Vec2(0.0f, 17.0f));
-            world.CreateJoint(&rjd);
+            world->CreateJoint(&rjd);
 
             b2PrismaticJointDef pjd;
             pjd.Initialize(ground, body, b2Vec2(0.0f, 17.0f), b2Vec2(0.0f, 1.0f));
@@ -426,7 +470,7 @@ static void worldStart(void)
             pjd.maxMotorForce = 1000.0f;
             pjd.enableMotor = true;
 
-            world.CreateJoint(&pjd);
+            world->CreateJoint(&pjd);
         }
 
         // Create a payload
@@ -437,13 +481,13 @@ static void worldStart(void)
             b2BodyDef bd;
             bd.type = b2_dynamicBody;
             bd.position.Set(0.0f, 23.0f);
-            b2Body *body = world.CreateBody(&bd);
+            b2Body *body = world->CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
         }
     }
 
     Draw debugDraw{};
-    world.SetDebugDraw(&debugDraw);
+    world->SetDebugDraw(&debugDraw);
     debugDraw.SetFlags(b2Draw::e_shapeBit);
 
     bool running = true;
@@ -451,7 +495,7 @@ static void worldStart(void)
     {
         ggj2021::b2World w;
         debugDraw.world = &w;
-        world.DebugDraw();
+        world->DebugDraw();
 
         int size = 0;
         std::string s = w.SerializeAsString();
@@ -461,8 +505,8 @@ static void worldStart(void)
             size += s.size();
         }
 
-        std::cout << "update world : " << size << ", count: " << clients.size() << std::endl;
-        world.Step(.030f, 10, 10);
+//        std::cout << "update world : " << size << ", count: " << clients.size() << std::endl;
+        world->Step(.030f, 10, 10);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
