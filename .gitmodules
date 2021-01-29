@@ -1,15 +1,15 @@
 [submodule "vendor/github.com/erincatto/box2d.git"]
 	path = vendor/github.com/erincatto/box2d.git
-	url = git@github.com:erincatto/box2d.git
+	url = https://github.com/erincatto/box2d.git
 [submodule "vendor/github.com/zaphoyd/websocketpp.git"]
 	path = vendor/github.com/zaphoyd/websocketpp.git
-	url = git@github.com:zaphoyd/websocketpp.git
+	url = https://github.com/zaphoyd/websocketpp.git
 [submodule "vendor/github.com/machinezone/IXWebSocket.git"]
 	path = vendor/github.com/machinezone/IXWebSocket.git
-	url = git@github.com:machinezone/IXWebSocket.git
+	url = https://github.com/machinezone/IXWebSocket.git
 [submodule "vendor/github.com/ebiggers/libdeflate.git"]
 	path = vendor/github.com/ebiggers/libdeflate.git
-	url = git@github.com:ebiggers/libdeflate.git
+	url = https://github.com/ebiggers/libdeflate.git
 [submodule "vendor/github.com/protocolbuffers/protobuf.git"]
 	path = vendor/github.com/protocolbuffers/protobuf.git
-	url = git@github.com:protocolbuffers/protobuf.git
+	url = https://github.com/protocolbuffers/protobuf.git
