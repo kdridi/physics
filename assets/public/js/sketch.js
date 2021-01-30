@@ -33,13 +33,6 @@ function setup() {
 function draw() {
 	background(0)
 
-	const w2p = (vec) => {
-		// console.log(vec)
-		const x = 0 + vec.x * 9
-		const y = 280 - vec.y * 9
-		return { x, y }
-	}
-
 	if (world !== null) {
 		// console.log(world)
 		world.circles.forEach(({ center }) => {
@@ -62,7 +55,7 @@ function draw() {
 			)
 			beginShape()
 			vertices.forEach((vertice) => {
-				const { x, y } = w2p(vertice)
+				const { x, y } = vertice
 				vertex(x, y)
 			})
 			endShape(CLOSE)
@@ -81,10 +74,13 @@ function draw() {
 }
 
 function mousePressed(event) {
-	console.log(socket)
-	socket.send('message from the client')
+	// console.log(socket)
+	// socket.send('message from the client')
+	// console.log(event)
 }
 
-function keyPressed({ code }) {
+function keyPressed(event) {
+	// console.log(event)
+	const { code } = event
 	socket.send(`keyPressed: ${code}`)
 }

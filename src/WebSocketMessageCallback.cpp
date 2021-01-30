@@ -29,23 +29,30 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
         const std::string prefix{"keyPressed: "};
         if (msg->str.compare(0, prefix.size(), prefix.c_str()) == 0)
         {
+            float power = 800000.0f;
             const std::string suffix{msg->str.c_str() + prefix.size()};
             std::cout << "KEY: [" << suffix << "]" << std::endl;
-            if (suffix.compare("ArrowUp") == 0)
+            if (suffix.compare("ArrowDown") == 0)
             {
-                b2Vec2 force{0.0f, 200.0f};
+                b2Vec2 force{0.0f, 0.0f + power};
+                b2Vec2 point = _body->GetPosition();
+                _body->ApplyLinearImpulseToCenter(force, true);
+            }
+            else if (suffix.compare("ArrowUp") == 0)
+            {
+                b2Vec2 force{0.0f, 0.0f - power};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
             else if (suffix.compare("ArrowLeft") == 0)
             {
-                b2Vec2 force{-200.0f, 0.0f};
+                b2Vec2 force{0.0f - power, 0.0f};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
             else if (suffix.compare("ArrowRight") == 0)
             {
-                b2Vec2 force{200.0f, 0.0f};
+                b2Vec2 force{0.0f + power, 0.0f};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
@@ -55,13 +62,15 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
     case ix::WebSocketMessageType::Open:
     {
         b2PolygonShape shape;
-        shape.SetAsBox(1.5f, 1.5f);
+        shape.SetAsBox(10.0, 10.0f);
 
         b2BodyDef bd;
         bd.type = b2_dynamicBody;
-        bd.position.Set(-10.0f, 23.0f);
+        bd.position.Set(0.0f, 0.0f);
         _body = _manager.world().CreateBody(&bd);
         _body->CreateFixture(&shape, 2.0f);
+        _body->SetLinearDamping(0.0f);
+        
         break;
     }
     case ix::WebSocketMessageType::Close:
@@ -85,9 +94,13 @@ size_t WebSocketClient::sendMessage(std::string const &message)
 }
 
 WebSocketClientManager::WebSocketClientManager()
+: _mutex()
+, _clients()
+, _world(nullptr)
+, _dimensions(800.0f, 600.0f)
 {
     b2Vec2 gravity;
-    gravity.Set(0.0f, -10.0f);
+    gravity.Set(0.0f, 0.0f);
     _world = new b2World{gravity};
 }
 
@@ -131,104 +144,71 @@ size_t WebSocketClientManager::broadcast(const std::string &message)
         result += client.second->sendMessage(message);
     }
 
-    std::cout << "update world : " << result << ", count: " << _clients.size() << std::endl;
+//    std::cout << "update world : " << result << ", count: " << _clients.size() << std::endl;
 
     return result;
 }
 
 WebSocketClientManager &WebSocketClientManager::start(void) {
-    b2Body *ground = NULL;
+    static const float width = 20.0f;
     
+    // border bottom
     {
+        b2Vec2 dim{_dimensions.x, width};
+        
+        b2PolygonShape shape;
+        shape.SetAsBox(dim.x / 2, dim.y / 2);
+
         b2BodyDef bd;
-        ground = _world->CreateBody(&bd);
-
-        b2EdgeShape shape;
-        shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
-        ground->CreateFixture(&shape, 0.0f);
+        bd.type = b2_staticBody;
+        bd.position.Set(0.0f, 0 + (_dimensions.y - dim.y) / 2.0);
+        
+        b2Body *body = _world->CreateBody(&bd);
+        body->CreateFixture(&shape, 2.0f);
     }
-
+    // border bottom
     {
-        b2Body *prevBody = ground;
+        b2Vec2 dim{_dimensions.x, width};
+        
+        b2PolygonShape shape;
+        shape.SetAsBox(dim.x / 2, dim.y / 2);
 
-        // Define crank.
-        {
-            b2PolygonShape shape;
-            shape.SetAsBox(0.5f, 2.0f);
-
-            b2BodyDef bd;
-            bd.type = b2_dynamicBody;
-            bd.position.Set(0.0f, 7.0f);
-            b2Body *body = _world->CreateBody(&bd);
-            body->CreateFixture(&shape, 2.0f);
-
-            b2RevoluteJointDef rjd;
-            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 5.0f));
-            rjd.motorSpeed = 1.0f * b2_pi;
-            rjd.maxMotorTorque = 10000.0f;
-            rjd.enableMotor = true;
-            _world->CreateJoint(&rjd);
-
-            prevBody = body;
-        }
-
-        // Define follower.
-        {
-            b2PolygonShape shape;
-            shape.SetAsBox(0.5f, 4.0f);
-
-            b2BodyDef bd;
-            bd.type = b2_dynamicBody;
-            bd.position.Set(0.0f, 13.0f);
-            b2Body *body = _world->CreateBody(&bd);
-            body->CreateFixture(&shape, 2.0f);
-
-            b2RevoluteJointDef rjd;
-            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 9.0f));
-            rjd.enableMotor = false;
-            _world->CreateJoint(&rjd);
-
-            prevBody = body;
-        }
-
-        // Define piston
-        {
-            b2PolygonShape shape;
-            shape.SetAsBox(1.5f, 1.5f);
-
-            b2BodyDef bd;
-            bd.type = b2_dynamicBody;
-            bd.fixedRotation = true;
-            bd.position.Set(0.0f, 17.0f);
-            b2Body *body = _world->CreateBody(&bd);
-            body->CreateFixture(&shape, 2.0f);
-
-            b2RevoluteJointDef rjd;
-            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 17.0f));
-            _world->CreateJoint(&rjd);
-
-            b2PrismaticJointDef pjd;
-            pjd.Initialize(ground, body, b2Vec2(0.0f, 17.0f), b2Vec2(0.0f, 1.0f));
-
-            pjd.maxMotorForce = 1000.0f;
-            pjd.enableMotor = true;
-
-            _world->CreateJoint(&pjd);
-        }
-
-        // Create a payload
-        {
-            b2PolygonShape shape;
-            shape.SetAsBox(1.5f, 1.5f);
-
-            b2BodyDef bd;
-            bd.type = b2_dynamicBody;
-            bd.position.Set(0.0f, 23.0f);
-            b2Body *body = _world->CreateBody(&bd);
-            body->CreateFixture(&shape, 2.0f);
-        }
+        b2BodyDef bd;
+        bd.type = b2_staticBody;
+        bd.position.Set(0.0f, 0 - (_dimensions.y - dim.y) / 2.0);
+        
+        b2Body *body = _world->CreateBody(&bd);
+        body->CreateFixture(&shape, 2.0f);
     }
-    
+    // border left
+    {
+        b2Vec2 dim{width, _dimensions.y - 2.0f * width};
+        
+        b2PolygonShape shape;
+        shape.SetAsBox(dim.x / 2, dim.y / 2);
+
+        b2BodyDef bd;
+        bd.type = b2_staticBody;
+        bd.position.Set(0 - (_dimensions.x - dim.x) / 2.0, 0.0f);
+        
+        b2Body *body = _world->CreateBody(&bd);
+        body->CreateFixture(&shape, 2.0f);
+    }
+    // border left
+    {
+        b2Vec2 dim{width, _dimensions.y - 2.0f * width};
+        
+        b2PolygonShape shape;
+        shape.SetAsBox(dim.x / 2, dim.y / 2);
+
+        b2BodyDef bd;
+        bd.type = b2_staticBody;
+        bd.position.Set(0 + (_dimensions.x - dim.x) / 2.0, 0.0f);
+        
+        b2Body *body = _world->CreateBody(&bd);
+        body->CreateFixture(&shape, 2.0f);
+    }
+
     return *this;
 }
 
