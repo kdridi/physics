@@ -12,3 +12,6 @@ scripts/01-box2d.sh
 scripts/02-deflate.sh
 scripts/03-IXWebSocket.sh
 scripts/04-protobuf.sh
+
+cd system/${PLATFORM}
+uname -a | grep -i ubuntu && ln -sf lib lib64
