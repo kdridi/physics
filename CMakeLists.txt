@@ -15,10 +15,9 @@ set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -g3")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -g3 -fsanitize=address")
 set(LIB64 "lib64")
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -fsanitize=leak")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -fsanitize=address -fsanitize=leak")
 endif()
 
 set(LIB64 "lib")
@@ -43,6 +42,8 @@ add_executable(${EXECUTABLE_NAME}
   src/proto/box2d.pb.cc
   src/file_utils.cpp
   src/file_utils.hpp
+  src/WebSocketMessageCallback.cpp
+  src/WebSocketMessageCallback.hpp
   src/main.cpp
 )
 

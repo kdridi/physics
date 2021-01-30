@@ -1,5 +1,5 @@
 system/
-tmp/
+build/
 .vscode/
 src/proto/
 assets/public/proto/

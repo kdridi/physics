@@ -10,6 +10,7 @@
 #include <list>
 
 #include "file_utils.hpp"
+#include "WebSocketMessageCallback.hpp"
 
 static void httpStart(int port, const char *hostname)
 {
@@ -105,10 +106,7 @@ static void httpStart(int port, const char *hostname)
     }
 }
 
-static b2World *world = nullptr;
-
-static std::map<std::string, std::shared_ptr<ix::WebSocket>> clients;
-static std::map<std::string, b2Body*> players;
+static WebSocketClientManager clientManager;
 
 static void wsStart(int port, const char *hostname)
 {
@@ -118,142 +116,12 @@ static void wsStart(int port, const char *hostname)
     server.setOnConnectionCallback([](std::weak_ptr<ix::WebSocket> ptr, std::shared_ptr<ix::ConnectionState> st) {
         if (auto ws = ptr.lock())
         {
-            ws->setOnMessageCallback([st, ws](const ix::WebSocketMessagePtr &msg) -> void {
-                switch (msg->type)
-                {
-                case ix::WebSocketMessageType::Message:
-                {
-                    std::stringstream key;
-                    key << st->getRemoteIp();
-                    key << ":";
-                    key << st->getRemotePort();
-                    
-                    std::cout << "received Message: " << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    // actions[ptr]->push_back(msg->str);
-                    
-                    const std::string prefix{"keyPressed: "};
-                    if (msg->str.compare(0, prefix.size(), prefix.c_str()) == 0) {
-                        const std::string suffix{msg->str.c_str() + prefix.size()};
-                        std::cout << "KEY: [" << suffix << "]" << std::endl;
-                        if (suffix.compare("ArrowUp") == 0) {
-                            auto body = players[key.str()];
-                            b2Vec2 force{0.0f, 200.0f};
-                            b2Vec2 point = body->GetPosition();
-                            body->ApplyLinearImpulseToCenter(force, true);
-                        } else if (suffix.compare("ArrowLeft") == 0) {
-                            auto body = players[key.str()];
-                            b2Vec2 force{-200.0f, 0.0f};
-                            b2Vec2 point = body->GetPosition();
-                            body->ApplyLinearImpulseToCenter(force, true);
-                        } else if (suffix.compare("ArrowRight") == 0) {
-                            auto body = players[key.str()];
-                            b2Vec2 force{ 200.0f, 0.0f};
-                            b2Vec2 point = body->GetPosition();
-                            body->ApplyLinearImpulseToCenter(force, true);
-                        }
-                    }
-                    
-                    break;
-                }
-                case ix::WebSocketMessageType::Open:
-                {
-                    std::stringstream key;
-                    key << st->getRemoteIp();
-                    key << ":";
-                    key << st->getRemotePort();
+            std::stringstream key;
+            key << st->getRemoteIp();
+            key << ":";
+            key << st->getRemotePort();
 
-                    std::cout << "received Open: " << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "getRemoteIp: " << st->getRemoteIp() << std::endl;
-                    std::cout << "getRemotePort: " << st->getRemotePort() << std::endl;
-                    std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    std::cout << "\turi: " << msg->openInfo.uri << std::endl;
-                    std::cout << "\tprotocol: " << msg->openInfo.protocol << std::endl;
-                    for (auto header : msg->openInfo.headers)
-                        std::cout << "\theader[\"" << header.first << "\"] = \"" << header.second << "\"" << std::endl;
-                    clients[key.str()] = ws;
-                    
-                    {
-                        b2PolygonShape shape;
-                        shape.SetAsBox(1.5f, 1.5f);
-
-                        b2BodyDef bd;
-                        bd.type = b2_dynamicBody;
-                        bd.position.Set(-10.0f, 23.0f);
-                        b2Body *body = world->CreateBody(&bd);
-                        body->CreateFixture(&shape, 2.0f);
-                        
-                        players[key.str()] = body;
-                    }
-                    
-                    break;
-                }
-                case ix::WebSocketMessageType::Close:
-                {
-                    std::stringstream key;
-                    key << st->getRemoteIp();
-                    key << ":";
-                    key << st->getRemotePort();
-
-                    std::cout << "received Close: " << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "getRemoteIp: " << st->getRemoteIp() << std::endl;
-                    std::cout << "getRemotePort: " << st->getRemotePort() << std::endl;
-                    std::cout << "\tbinary: " << (msg->binary ? "true" : "false") << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    std::cout << "\tcode: " << msg->closeInfo.code << std::endl;
-                    std::cout << "\treason: " << msg->closeInfo.reason << std::endl;
-                    std::cout << "\tremote: " << (msg->closeInfo.remote ? "true" : "false") << std::endl;
-                    auto it = clients.find(key.str());
-                    assert(it != clients.end());
-                    clients.erase(key.str());
-                    break;
-                }
-                case ix::WebSocketMessageType::Error:
-                {
-                    std::cout << "received Error: " << msg->str << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "\tbinary: " << msg->binary << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    std::cout << "\tretries: " << msg->errorInfo.retries << std::endl;
-                    std::cout << "\twait_time: " << msg->errorInfo.wait_time << std::endl;
-                    std::cout << "\thttp_status: " << msg->errorInfo.http_status << std::endl;
-                    std::cout << "\treason: " << msg->errorInfo.reason << std::endl;
-                    std::cout << "\tdecompressionError: " << msg->errorInfo.decompressionError << std::endl;
-                    break;
-                }
-                case ix::WebSocketMessageType::Ping:
-                {
-                    std::cout << "received Ping: " << msg->str << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "\tbinary: " << msg->binary << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    break;
-                }
-                case ix::WebSocketMessageType::Pong:
-                {
-                    std::cout << "received Pong: " << msg->str << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "\tbinary: " << msg->binary << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    break;
-                }
-                case ix::WebSocketMessageType::Fragment:
-                {
-                    std::cout << "received Fragment: " << msg->str << std::endl;
-                    std::cout << "State ID: " << st->getId() << std::endl;
-                    std::cout << "\tbinary: " << msg->binary << std::endl;
-                    std::cout << "\tstr: " << msg->str << std::endl;
-                    break;
-                }
-                default:
-                    break;
-                }
-            });
+            ws->setOnMessageCallback(clientManager.getClient(key.str(), ws));
         }
     });
 
@@ -391,14 +259,11 @@ public:
 
 static void worldStart(void)
 {
-    b2Vec2 gravity;
-    gravity.Set(0.0f, -10.0f);
-    world = new b2World{gravity};
 
     b2Body *ground = NULL;
     {
         b2BodyDef bd;
-        ground = world->CreateBody(&bd);
+        ground = clientManager.world().CreateBody(&bd);
 
         b2EdgeShape shape;
         shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
@@ -416,7 +281,7 @@ static void worldStart(void)
             b2BodyDef bd;
             bd.type = b2_dynamicBody;
             bd.position.Set(0.0f, 7.0f);
-            b2Body *body = world->CreateBody(&bd);
+            b2Body *body = clientManager.world().CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
 
             b2RevoluteJointDef rjd;
@@ -424,7 +289,7 @@ static void worldStart(void)
             rjd.motorSpeed = 1.0f * b2_pi;
             rjd.maxMotorTorque = 10000.0f;
             rjd.enableMotor = true;
-            world->CreateJoint(&rjd);
+            clientManager.world().CreateJoint(&rjd);
 
             prevBody = body;
         }
@@ -437,13 +302,13 @@ static void worldStart(void)
             b2BodyDef bd;
             bd.type = b2_dynamicBody;
             bd.position.Set(0.0f, 13.0f);
-            b2Body *body = world->CreateBody(&bd);
+            b2Body *body = clientManager.world().CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
 
             b2RevoluteJointDef rjd;
             rjd.Initialize(prevBody, body, b2Vec2(0.0f, 9.0f));
             rjd.enableMotor = false;
-            world->CreateJoint(&rjd);
+            clientManager.world().CreateJoint(&rjd);
 
             prevBody = body;
         }
@@ -457,12 +322,12 @@ static void worldStart(void)
             bd.type = b2_dynamicBody;
             bd.fixedRotation = true;
             bd.position.Set(0.0f, 17.0f);
-            b2Body *body = world->CreateBody(&bd);
+            b2Body *body = clientManager.world().CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
 
             b2RevoluteJointDef rjd;
             rjd.Initialize(prevBody, body, b2Vec2(0.0f, 17.0f));
-            world->CreateJoint(&rjd);
+            clientManager.world().CreateJoint(&rjd);
 
             b2PrismaticJointDef pjd;
             pjd.Initialize(ground, body, b2Vec2(0.0f, 17.0f), b2Vec2(0.0f, 1.0f));
@@ -470,7 +335,7 @@ static void worldStart(void)
             pjd.maxMotorForce = 1000.0f;
             pjd.enableMotor = true;
 
-            world->CreateJoint(&pjd);
+            clientManager.world().CreateJoint(&pjd);
         }
 
         // Create a payload
@@ -481,13 +346,13 @@ static void worldStart(void)
             b2BodyDef bd;
             bd.type = b2_dynamicBody;
             bd.position.Set(0.0f, 23.0f);
-            b2Body *body = world->CreateBody(&bd);
+            b2Body *body = clientManager.world().CreateBody(&bd);
             body->CreateFixture(&shape, 2.0f);
         }
     }
 
     Draw debugDraw{};
-    world->SetDebugDraw(&debugDraw);
+    clientManager.world().SetDebugDraw(&debugDraw);
     debugDraw.SetFlags(b2Draw::e_shapeBit);
 
     bool running = true;
@@ -495,18 +360,12 @@ static void worldStart(void)
     {
         ggj2021::b2World w;
         debugDraw.world = &w;
-        world->DebugDraw();
+        clientManager.world().DebugDraw();
 
-        int size = 0;
         std::string s = w.SerializeAsString();
-        for (auto client : clients)
-        {
-            client.second->sendBinary(s);
-            size += s.size();
-        }
-
-//        std::cout << "update world : " << size << ", count: " << clients.size() << std::endl;
-        world->Step(.030f, 10, 10);
+        size_t size = clientManager.broadcast(s);
+        
+        clientManager.world().Step(.030f, 10, 10);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 }
