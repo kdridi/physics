@@ -8,6 +8,7 @@ function setup() {
 	protobuf.load('proto/box2d.proto', (error, root) => {
 		if (error === null) {
 			window.b2World = root.lookupType('ggj2021.b2World')
+			window.c2s = root.lookupType('ggj2021.c2s')
 
 			socket = new WebSocket(`ws://${window.location.hostname}:9091`)
 
@@ -73,14 +74,31 @@ function draw() {
 	}
 }
 
-function mousePressed(event) {
-	// console.log(socket)
-	// socket.send('message from the client')
+function mousePressed({ clientX, clientY }) {
+	const data = {
+		mouse: {
+			position: {
+				x: map(clientX, 0, width, 0 - width / 2, width / 2),
+				y: map(clientY, 0, height, 0 - height / 2, height / 2),
+			},
+			left: false,
+			right: false,
+		},
+	}
+	const arr = []
+	arr.push('mp')
+	arr.push(data.mouse.left ? 1 : 0)
+	arr.push(data.mouse.false ? 1 : 0)
+	arr.push(Math.round(data.mouse.position.x))
+	arr.push(Math.round(data.mouse.position.y))
+	arr.push('')
+	socket.send(arr.join(':'))
+	// debugger
 	// console.log(event)
 }
 
 function keyPressed(event) {
 	// console.log(event)
 	const { code } = event
-	socket.send(`keyPressed: ${code}`)
+	socket.send(`kp:${code}`)
 }

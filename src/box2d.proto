@@ -50,3 +50,13 @@ message b2World {
     repeated b2Transform transforms = 4;
     repeated b2Point points = 5;
 }
+
+message Mouse {
+    required b2Vec2 position = 1;
+    required bool left = 2;
+    required bool right = 3;
+}
+
+message c2s {
+    required Mouse mouse = 1;
+}
