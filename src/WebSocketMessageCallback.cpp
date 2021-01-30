@@ -72,35 +72,35 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
     {
     case ix::WebSocketMessageType::Message:
     {
+        float W = 1000.0f;
         ggj2021::Mouse mouse;
 
         const std::string prefix{"kp:"};
         if (msg->str.compare(0, prefix.size(), prefix.c_str()) == 0)
         {
-            float power = 800000.0f;
             const std::string suffix{msg->str.c_str() + prefix.size()};
             std::cout << "KEY: [" << suffix << "]" << std::endl;
             if (suffix.compare("ArrowDown") == 0)
             {
-                b2Vec2 force{0.0f, 0.0f + power};
+                b2Vec2 force{0.0f, 0.0f + W};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
             else if (suffix.compare("ArrowUp") == 0)
             {
-                b2Vec2 force{0.0f, 0.0f - power};
+                b2Vec2 force{0.0f, 0.0f - W};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
             else if (suffix.compare("ArrowLeft") == 0)
             {
-                b2Vec2 force{0.0f - power, 0.0f};
+                b2Vec2 force{0.0f - W, 0.0f};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
             else if (suffix.compare("ArrowRight") == 0)
             {
-                b2Vec2 force{0.0f + power, 0.0f};
+                b2Vec2 force{0.0f + W, 0.0f};
                 b2Vec2 point = _body->GetPosition();
                 _body->ApplyLinearImpulseToCenter(force, true);
             }
@@ -113,12 +113,12 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
             << "x: " << mouse.position().x() << std::endl
             << "y: " << mouse.position().y() << std::endl;
             
-            float w = 80000000.0f;
             b2Vec2 m{mouse.position().x(), mouse.position().y()};
             b2Vec2 p{_body->GetPosition()};
             b2Vec2 f{m.x - p.x, m.y - p.y};
-            f *= w;
+            f *= W;
             _body->ApplyLinearImpulseToCenter(f, true);
+//            _body->ApplyForce(f, p, true);
         }
         break;
     }
@@ -126,7 +126,7 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
     {
 #pragma mark spawn the player
         b2PolygonShape shape;
-        shape.SetAsBox(10.0, 10.0f);
+        shape.SetAsBox(1.0, 1.0f);
 
         float px = 100.0 * (2.0 * ((double)rand() / (RAND_MAX)) - 1.0);
         px += px > 0 ? 0.0 + 100.0 : 0.0 - 100.0f;
@@ -136,10 +136,15 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
 
         b2BodyDef bd;
         bd.type = b2_dynamicBody;
-        bd.position.Set(px, py);
+        bd.position.Set(px / 10.0, py / 10.0);
+        
+        b2FixtureDef fd;
+        fd.shape = &shape;
+        fd.density = 10.0f;
+        fd.restitution = 0.1f;
+        
         _body = _manager.world().CreateBody(&bd);
-        _body->CreateFixture(&shape, 2.0f);
-        _body->SetLinearDamping(0.0f);
+        _body->CreateFixture(&fd);
 
         break;
     }
@@ -164,7 +169,7 @@ size_t WebSocketClient::sendMessage(std::string const &message)
 }
 
 WebSocketClientManager::WebSocketClientManager()
-    : _mutex(), _clients(), _world(nullptr), _ball(nullptr), _dimensions(800.0f, 600.0f)
+    : _mutex(), _clients(), _world(nullptr), _ball(nullptr), _dimensions(80.0f, 60.0f)
 {
     b2Vec2 gravity;
     gravity.Set(0.0f, 0.0f);
@@ -218,7 +223,7 @@ size_t WebSocketClientManager::broadcast(const std::string &message)
 
 WebSocketClientManager &WebSocketClientManager::start(void)
 {
-    static const float width = 20.0f;
+    static const float width = 2.0f;
 
 #pragma mark spawn the field
     // border bottom
@@ -281,12 +286,17 @@ WebSocketClientManager &WebSocketClientManager::start(void)
     {
         b2CircleShape shape;
         shape.m_radius = width;
+        
+        b2FixtureDef fd;
+        fd.shape = &shape;
+        fd.density = 1.0f;
+        fd.restitution = 1.0f;
 
         b2BodyDef bd;
         bd.type = b2_dynamicBody;
         bd.position.Set(0.0f, 0.0f);
         _ball = _world->CreateBody(&bd);
-        _ball->CreateFixture(&shape, 2.0f);
+        _ball->CreateFixture(&fd);
     }
 
     return *this;
@@ -300,7 +310,7 @@ WebSocketClientManager &WebSocketClientManager::wait(void)
     while (running)
     {
         size_t size = broadcast(serializer.serialize(world()));
-        world().Step(.030f, 10, 10);
+        world().Step(.030f, 1000, 1000);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
 

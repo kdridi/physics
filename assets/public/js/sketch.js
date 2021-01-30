@@ -38,7 +38,7 @@ function draw() {
 		// console.log(world)
 		world.circles.forEach(({ center, radius }) => {
 			const { x, y } = center
-			ellipse(x, y, 2 * radius)
+			ellipse(x * 10, y * 10, 20 * radius)
 		})
 		world.points.forEach(({ position }) => {
 			const { x, y } = w2p(position)
@@ -57,7 +57,7 @@ function draw() {
 			beginShape()
 			vertices.forEach((vertice) => {
 				const { x, y } = vertice
-				vertex(x, y)
+				vertex(x * 10, y * 10)
 			})
 			endShape(CLOSE)
 		})
@@ -78,8 +78,8 @@ function mousePressed({ clientX, clientY }) {
 	const data = {
 		mouse: {
 			position: {
-				x: map(clientX, 0, width, 0 - width / 2, width / 2),
-				y: map(clientY, 0, height, 0 - height / 2, height / 2),
+				x: map(clientX, 0, width, (0 - width / 2) / 10, width / 2 / 10),
+				y: map(clientY, 0, height, (0 - height / 2) / 10, height / 2 / 10),
 			},
 			left: false,
 			right: false,
