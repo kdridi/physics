@@ -44,6 +44,12 @@ add_executable(${EXECUTABLE_NAME}
   src/file_utils.hpp
   src/WebSocketMessageCallback.cpp
   src/WebSocketMessageCallback.hpp
+  src/WebSocketSerializer.cpp
+  src/WebSocketSerializer.hpp
+  src/WebHTTPServer.cpp
+  src/WebHTTPServer.hpp
+  src/WebSocketServer.cpp
+  src/WebSocketServer.hpp
   src/main.cpp
 )
 

@@ -43,6 +43,9 @@ public:
         return *_world;
     }
     
+    WebSocketClientManager &start(void);
+    WebSocketClientManager &wait(void);
+
     WebSocketClientManager &removeClient(std::string const& key);
     size_t broadcast(const std::string& message);
     

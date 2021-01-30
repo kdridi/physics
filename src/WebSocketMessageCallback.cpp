@@ -6,6 +6,7 @@
 //
 
 #include "WebSocketMessageCallback.hpp"
+#include "WebSocketSerializer.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -77,7 +78,8 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
     }
 }
 
-size_t WebSocketClient::sendMessage(std::string const& message) {
+size_t WebSocketClient::sendMessage(std::string const &message)
+{
     _socket->sendBinary(message);
     return message.size();
 }
@@ -91,7 +93,8 @@ WebSocketClientManager::WebSocketClientManager()
 
 WebSocketClientManager::~WebSocketClientManager()
 {
-    if (_world != nullptr) {
+    if (_world != nullptr)
+    {
         delete _world;
     }
 }
@@ -99,7 +102,7 @@ WebSocketClientManager::~WebSocketClientManager()
 WebSocketClient &WebSocketClientManager::getClient(const std::string &key, std::shared_ptr<ix::WebSocket> ws)
 {
     const std::lock_guard<std::mutex> lock(_mutex);
-    
+
     auto it = _clients.find(key);
     if (it == _clients.end())
         _clients[key] = std::make_shared<WebSocketClient>(key, *this, ws);
@@ -107,26 +110,139 @@ WebSocketClient &WebSocketClientManager::getClient(const std::string &key, std::
     return *(_clients.at(key));
 }
 
-WebSocketClientManager &WebSocketClientManager::removeClient(std::string const& key)
+WebSocketClientManager &WebSocketClientManager::removeClient(std::string const &key)
 {
     const std::lock_guard<std::mutex> lock(_mutex);
 
     auto it = _clients.find(key);
     assert(it != _clients.end());
     _clients.erase(it);
+
+    return *this;
+}
+
+size_t WebSocketClientManager::broadcast(const std::string &message)
+{
+    const std::lock_guard<std::mutex> lock(_mutex);
+
+    size_t result = 0;
+    for (auto client : _clients)
+    {
+        result += client.second->sendMessage(message);
+    }
+
+    std::cout << "update world : " << result << ", count: " << _clients.size() << std::endl;
+
+    return result;
+}
+
+WebSocketClientManager &WebSocketClientManager::start(void) {
+    b2Body *ground = NULL;
+    
+    {
+        b2BodyDef bd;
+        ground = _world->CreateBody(&bd);
+
+        b2EdgeShape shape;
+        shape.SetTwoSided(b2Vec2(-40.0f, 0.0f), b2Vec2(40.0f, 0.0f));
+        ground->CreateFixture(&shape, 0.0f);
+    }
+
+    {
+        b2Body *prevBody = ground;
+
+        // Define crank.
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(0.5f, 2.0f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 7.0f);
+            b2Body *body = _world->CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+
+            b2RevoluteJointDef rjd;
+            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 5.0f));
+            rjd.motorSpeed = 1.0f * b2_pi;
+            rjd.maxMotorTorque = 10000.0f;
+            rjd.enableMotor = true;
+            _world->CreateJoint(&rjd);
+
+            prevBody = body;
+        }
+
+        // Define follower.
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(0.5f, 4.0f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 13.0f);
+            b2Body *body = _world->CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+
+            b2RevoluteJointDef rjd;
+            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 9.0f));
+            rjd.enableMotor = false;
+            _world->CreateJoint(&rjd);
+
+            prevBody = body;
+        }
+
+        // Define piston
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(1.5f, 1.5f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.fixedRotation = true;
+            bd.position.Set(0.0f, 17.0f);
+            b2Body *body = _world->CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+
+            b2RevoluteJointDef rjd;
+            rjd.Initialize(prevBody, body, b2Vec2(0.0f, 17.0f));
+            _world->CreateJoint(&rjd);
+
+            b2PrismaticJointDef pjd;
+            pjd.Initialize(ground, body, b2Vec2(0.0f, 17.0f), b2Vec2(0.0f, 1.0f));
+
+            pjd.maxMotorForce = 1000.0f;
+            pjd.enableMotor = true;
+
+            _world->CreateJoint(&pjd);
+        }
+
+        // Create a payload
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(1.5f, 1.5f);
+
+            b2BodyDef bd;
+            bd.type = b2_dynamicBody;
+            bd.position.Set(0.0f, 23.0f);
+            b2Body *body = _world->CreateBody(&bd);
+            body->CreateFixture(&shape, 2.0f);
+        }
+    }
     
     return *this;
 }
 
-size_t WebSocketClientManager::broadcast(const std::string& message) {
-    const std::lock_guard<std::mutex> lock(_mutex);
-    
-    size_t result = 0;
-    for (auto client : _clients) {
-        result += client.second->sendMessage(message);
+WebSocketClientManager &WebSocketClientManager::wait(void)
+{
+    WebSocketSerializer serializer{};
+
+    bool running = true;
+    while (running)
+    {
+        size_t size = broadcast(serializer.serialize(world()));
+        world().Step(.030f, 10, 10);
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
     
-    std::cout << "update world : " << result << ", count: " << _clients.size() << std::endl;
-
-    return result;
+    return *this;
 }
