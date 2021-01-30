@@ -366,7 +366,8 @@ WebSocketClientManager &WebSocketClientManager::wait(void)
         world().Step(.030f, 1000, 1000);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
-        if (_score == true) {
+        if (_score == true)
+        {
             spawnNewBall();
             _score = false;
         }
@@ -388,11 +389,13 @@ void WebSocketClientManager::BeginContact(b2Contact *contact)
 
     if (other != nullptr)
     {
-        if (other == _lgoal) {
+        if (other == _lgoal)
+        {
             std::cout << "LGOAL" << std::endl;
             _score = true;
         }
-        if (other == _rgoal) {
+        if (other == _rgoal)
+        {
             std::cout << "RGOAL" << std::endl;
             _score = true;
         }
@@ -400,11 +403,13 @@ void WebSocketClientManager::BeginContact(b2Contact *contact)
 }
 
 #pragma mark spawn the ball
-WebSocketClientManager &WebSocketClientManager::spawnNewBall() {
-    if (_ball != nullptr) {
+WebSocketClientManager &WebSocketClientManager::spawnNewBall()
+{
+    if (_ball != nullptr)
+    {
         _world->DestroyBody(_ball);
     }
-    
+
     b2CircleShape shape;
     shape.m_radius = width;
 

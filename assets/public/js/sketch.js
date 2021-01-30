@@ -74,12 +74,12 @@ function draw() {
 	}
 }
 
-function mousePressed({ clientX, clientY }) {
+function mousePressed() {
 	const data = {
 		mouse: {
 			position: {
-				x: map(clientX, 0, width, (0 - width / 2) / 10, width / 2 / 10),
-				y: map(clientY, 0, height, (0 - height / 2) / 10, height / 2 / 10),
+				x: map(mouseX, 0, width, (0 - width / 2) / 10, width / 2 / 10),
+				y: map(mouseY, 0, height, (0 - height / 2) / 10, height / 2 / 10),
 			},
 			left: false,
 			right: false,
@@ -98,7 +98,11 @@ function mousePressed({ clientX, clientY }) {
 }
 
 function keyPressed(event) {
-	// console.log(event)
+	console.log(event)
 	const { code } = event
 	socket.send(`kp:${code}`)
+	if (code === 'KeyF') {
+		let fs = fullscreen()
+		fullscreen(!fs)
+	}
 }
