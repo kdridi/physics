@@ -9,6 +9,14 @@ Please try this game on [Brayan's dedicated server](http://146.59.150.207:9090/)
 - step 3 : determine who is scoring
 - step 4 : reset the game every 5 minutes
 
+# Roadmap
+
+- launch the game fullscreen on mobile devices
+- use cookies to save the name player
+- use google/facebook oauth identification
+- serialize the leaderboard on diskfile
+- serialize the leaderboard on cloud database
+
 # Compilation and launch with docker
 
 ```sh
