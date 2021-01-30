@@ -63,10 +63,16 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
     {
         b2PolygonShape shape;
         shape.SetAsBox(10.0, 10.0f);
+        
+        float px = 100.0 * (2.0 * ((double) rand() / (RAND_MAX)) - 1.0);
+        px += px > 0 ? 0.0 + 100.0 : 0.0 - 100.0f;
+        
+        float py = 100.0 * (2.0 * ((double) rand() / (RAND_MAX)) - 1.0);
+        py += py > 0 ? 0.0 + 100.0 : 0.0 - 100.0f;
 
         b2BodyDef bd;
         bd.type = b2_dynamicBody;
-        bd.position.Set(0.0f, 0.0f);
+        bd.position.Set(px, py);
         _body = _manager.world().CreateBody(&bd);
         _body->CreateFixture(&shape, 2.0f);
         _body->SetLinearDamping(0.0f);
