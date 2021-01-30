@@ -1,3 +1,7 @@
+# Come Out & Play
+
+Please try this game on [Brayan's dedicated server](http://146.59.150.207:9090/)
+
 # Compilation and launch with docker
 
 ```sh
