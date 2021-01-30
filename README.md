@@ -2,6 +2,13 @@
 
 Please try this game on [Brayan's dedicated server](http://146.59.150.207:9090/)
 
+# Next Steps
+
+- step 1 : the player can rename himself
+- step 2 : establish a leaderboard
+- step 3 : determine who is scoring
+- step 4 : reset the game every 5 minutes
+
 # Compilation and launch with docker
 
 ```sh
