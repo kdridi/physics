@@ -53,6 +53,7 @@ private:
     std::mutex _mutex;
     std::map<std::string, std::shared_ptr<WebSocketClient>> _clients;
     b2World *_world;
+    b2Body *_ball;
     b2Vec2 _dimensions;
 };
 

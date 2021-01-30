@@ -35,9 +35,9 @@ function draw() {
 
 	if (world !== null) {
 		// console.log(world)
-		world.circles.forEach(({ center }) => {
-			const { x, y } = w2p(center)
-			ellipse(x, y, 10)
+		world.circles.forEach(({ center, radius }) => {
+			const { x, y } = center
+			ellipse(x, y, 2 * radius)
 		})
 		world.points.forEach(({ position }) => {
 			const { x, y } = w2p(position)

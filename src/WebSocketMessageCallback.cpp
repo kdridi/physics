@@ -61,6 +61,7 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
     }
     case ix::WebSocketMessageType::Open:
     {
+#pragma mark spawn the player
         b2PolygonShape shape;
         shape.SetAsBox(10.0, 10.0f);
         
@@ -103,6 +104,7 @@ WebSocketClientManager::WebSocketClientManager()
 : _mutex()
 , _clients()
 , _world(nullptr)
+, _ball(nullptr)
 , _dimensions(800.0f, 600.0f)
 {
     b2Vec2 gravity;
@@ -158,6 +160,7 @@ size_t WebSocketClientManager::broadcast(const std::string &message)
 WebSocketClientManager &WebSocketClientManager::start(void) {
     static const float width = 20.0f;
     
+#pragma mark spawn the field
     // border bottom
     {
         b2Vec2 dim{_dimensions.x, width};
@@ -213,6 +216,17 @@ WebSocketClientManager &WebSocketClientManager::start(void) {
         
         b2Body *body = _world->CreateBody(&bd);
         body->CreateFixture(&shape, 2.0f);
+    }
+#pragma mark spawn the ball
+    {
+        b2CircleShape shape;
+        shape.m_radius = width;
+        
+        b2BodyDef bd;
+        bd.type = b2_dynamicBody;
+        bd.position.Set(0.0f, 0.0f);
+        _ball = _world->CreateBody(&bd);
+        _ball->CreateFixture(&shape, 2.0f);
     }
 
     return *this;
