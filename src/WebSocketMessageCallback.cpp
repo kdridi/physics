@@ -108,17 +108,17 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
         else if (parseMouse(msg, mouse))
         {
             std::cout
-            << "left: " << mouse.left() << std::endl
-            << "right: " << mouse.right() << std::endl
-            << "x: " << mouse.position().x() << std::endl
-            << "y: " << mouse.position().y() << std::endl;
-            
+                << "left: " << mouse.left() << std::endl
+                << "right: " << mouse.right() << std::endl
+                << "x: " << mouse.position().x() << std::endl
+                << "y: " << mouse.position().y() << std::endl;
+
             b2Vec2 m{mouse.position().x(), mouse.position().y()};
             b2Vec2 p{_body->GetPosition()};
             b2Vec2 f{m.x - p.x, m.y - p.y};
             f *= W;
             _body->ApplyLinearImpulseToCenter(f, true);
-//            _body->ApplyForce(f, p, true);
+            //            _body->ApplyForce(f, p, true);
         }
         break;
     }
@@ -137,12 +137,14 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
         b2BodyDef bd;
         bd.type = b2_dynamicBody;
         bd.position.Set(px / 10.0, py / 10.0);
-        
+
         b2FixtureDef fd;
         fd.shape = &shape;
+        fd.filter.categoryBits = LTEAM;
+        //        fd.filter.maskBits = LTEAM | RTEAM;
         fd.density = 10.0f;
         fd.restitution = 0.1f;
-        
+
         _body = _manager.world().CreateBody(&bd);
         _body->CreateFixture(&fd);
 
@@ -169,11 +171,12 @@ size_t WebSocketClient::sendMessage(std::string const &message)
 }
 
 WebSocketClientManager::WebSocketClientManager()
-    : _mutex(), _clients(), _world(nullptr), _ball(nullptr), _dimensions(80.0f, 60.0f)
+    : _score(true), _mutex(), _clients(), _world(nullptr), _ball(nullptr), _dimensions(80.0f, 60.0f), _lgoal(nullptr), _rgoal(nullptr)
 {
     b2Vec2 gravity;
     gravity.Set(0.0f, 0.0f);
     _world = new b2World{gravity};
+    _world->SetContactListener(this);
 }
 
 WebSocketClientManager::~WebSocketClientManager()
@@ -221,10 +224,10 @@ size_t WebSocketClientManager::broadcast(const std::string &message)
     return result;
 }
 
+static const float width = 2.0f;
+
 WebSocketClientManager &WebSocketClientManager::start(void)
 {
-    static const float width = 2.0f;
-
 #pragma mark spawn the field
     // border bottom
     {
@@ -237,8 +240,14 @@ WebSocketClientManager &WebSocketClientManager::start(void)
         bd.type = b2_staticBody;
         bd.position.Set(0.0f, 0 + (_dimensions.y - dim.y) / 2.0);
 
+        b2FixtureDef fd;
+        fd.isSensor = false;
+        fd.shape = &shape;
+        fd.filter.categoryBits = BOUNDARY;
+        fd.density = 2.0f;
+
         b2Body *body = _world->CreateBody(&bd);
-        body->CreateFixture(&shape, 2.0f);
+        body->CreateFixture(&fd);
     }
     // border bottom
     {
@@ -251,8 +260,14 @@ WebSocketClientManager &WebSocketClientManager::start(void)
         bd.type = b2_staticBody;
         bd.position.Set(0.0f, 0 - (_dimensions.y - dim.y) / 2.0);
 
+        b2FixtureDef fd;
+        fd.isSensor = false;
+        fd.shape = &shape;
+        fd.filter.categoryBits = BOUNDARY;
+        fd.density = 2.0f;
+
         b2Body *body = _world->CreateBody(&bd);
-        body->CreateFixture(&shape, 2.0f);
+        body->CreateFixture(&fd);
     }
     // border left
     {
@@ -265,10 +280,16 @@ WebSocketClientManager &WebSocketClientManager::start(void)
         bd.type = b2_staticBody;
         bd.position.Set(0 - (_dimensions.x - dim.x) / 2.0, 0.0f);
 
+        b2FixtureDef fd;
+        fd.isSensor = false;
+        fd.shape = &shape;
+        fd.filter.categoryBits = BOUNDARY;
+        fd.density = 2.0f;
+
         b2Body *body = _world->CreateBody(&bd);
-        body->CreateFixture(&shape, 2.0f);
+        body->CreateFixture(&fd);
     }
-    // border left
+    // border right
     {
         b2Vec2 dim{width, _dimensions.y - 2.0f * width};
 
@@ -279,24 +300,55 @@ WebSocketClientManager &WebSocketClientManager::start(void)
         bd.type = b2_staticBody;
         bd.position.Set(0 + (_dimensions.x - dim.x) / 2.0, 0.0f);
 
-        b2Body *body = _world->CreateBody(&bd);
-        body->CreateFixture(&shape, 2.0f);
-    }
-#pragma mark spawn the ball
-    {
-        b2CircleShape shape;
-        shape.m_radius = width;
-        
         b2FixtureDef fd;
+        fd.isSensor = false;
         fd.shape = &shape;
-        fd.density = 1.0f;
-        fd.restitution = 1.0f;
+        fd.filter.categoryBits = BOUNDARY;
+        fd.density = 2.0f;
+
+        b2Body *body = _world->CreateBody(&bd);
+        body->CreateFixture(&fd);
+    }
+#pragma mark spawn the goals
+    // goal left
+    {
+        b2Vec2 dim{width, 5.0f * width};
+
+        b2PolygonShape shape;
+        shape.SetAsBox(dim.x / 2, dim.y / 2);
 
         b2BodyDef bd;
-        bd.type = b2_dynamicBody;
-        bd.position.Set(0.0f, 0.0f);
-        _ball = _world->CreateBody(&bd);
-        _ball->CreateFixture(&fd);
+        bd.type = b2_staticBody;
+        bd.position.Set(0 - (_dimensions.x - 4.0 * dim.x) / 2.0, 0.0f);
+
+        b2FixtureDef fd;
+        fd.shape = &shape;
+        fd.filter.categoryBits = GOAL;
+        fd.filter.maskBits = RTEAM | BALL;
+        fd.density = 2.0f;
+
+        _lgoal = _world->CreateBody(&bd);
+        _lgoal->CreateFixture(&fd);
+    }
+    // goal right
+    {
+        b2Vec2 dim{width, 5.0f * width};
+
+        b2PolygonShape shape;
+        shape.SetAsBox(dim.x / 2, dim.y / 2);
+
+        b2BodyDef bd;
+        bd.type = b2_staticBody;
+        bd.position.Set(0 + (_dimensions.x - 4.0 * dim.x) / 2.0, 0.0f);
+
+        b2FixtureDef fd;
+        fd.shape = &shape;
+        fd.filter.categoryBits = GOAL;
+        fd.filter.maskBits = LTEAM | BALL;
+        fd.density = 2.0f;
+
+        _rgoal = _world->CreateBody(&bd);
+        _rgoal->CreateFixture(&fd);
     }
 
     return *this;
@@ -312,7 +364,61 @@ WebSocketClientManager &WebSocketClientManager::wait(void)
         size_t size = broadcast(serializer.serialize(world()));
         world().Step(.030f, 1000, 1000);
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+        if (_score == true) {
+            spawnNewBall();
+            _score = false;
+        }
     }
 
     return *this;
+}
+
+void WebSocketClientManager::BeginContact(b2Contact *contact)
+{
+    b2Body *ba = contact->GetFixtureA()->GetBody();
+    b2Body *bb = contact->GetFixtureB()->GetBody();
+
+    b2Body *other = nullptr;
+    if (ba == _ball)
+        other = bb;
+    if (bb == _ball)
+        other = ba;
+
+    if (other != nullptr)
+    {
+        if (other == _lgoal) {
+            std::cout << "LGOAL" << std::endl;
+            _score = true;
+        }
+        if (other == _rgoal) {
+            std::cout << "RGOAL" << std::endl;
+            _score = true;
+        }
+    }
+}
+
+#pragma mark spawn the ball
+WebSocketClientManager &WebSocketClientManager::spawnNewBall() {
+    if (_ball != nullptr) {
+        _world->DestroyBody(_ball);
+    }
+    
+    b2CircleShape shape;
+    shape.m_radius = width;
+
+    b2FixtureDef fd;
+    fd.shape = &shape;
+    fd.filter.categoryBits = BALL;
+    fd.filter.maskBits = LTEAM | RTEAM | BOUNDARY | GOAL;
+    fd.density = 1.0f;
+    fd.restitution = 1.0f;
+
+    b2BodyDef bd;
+    bd.type = b2_dynamicBody;
+    bd.position.Set(0.0f, 0.0f);
+    _ball = _world->CreateBody(&bd);
+    _ball->CreateFixture(&fd);
+
+    return (*this);
 }
