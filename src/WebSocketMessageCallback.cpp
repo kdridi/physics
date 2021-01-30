@@ -107,12 +107,6 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
         }
         else if (parseMouse(msg, mouse))
         {
-            std::cout
-                << "left: " << mouse.left() << std::endl
-                << "right: " << mouse.right() << std::endl
-                << "x: " << mouse.position().x() << std::endl
-                << "y: " << mouse.position().y() << std::endl;
-
             b2Vec2 m{mouse.position().x(), mouse.position().y()};
             b2Vec2 p{_body->GetPosition()};
             b2Vec2 f{m.x - p.x, m.y - p.y};
