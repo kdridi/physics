@@ -147,6 +147,7 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
 
         _body = _manager.world().CreateBody(&bd);
         _body->CreateFixture(&fd);
+        _body->SetBullet(true);
 
         break;
     }
