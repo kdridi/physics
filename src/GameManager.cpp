@@ -39,17 +39,7 @@ GOPlayer *GameManager::createPlayer()
 
 void GameManager::destroyPlayer(GOPlayer *player)
 {
-    const std::lock_guard<std::mutex> lock(_mutex);
-    auto it = _players.begin();
-    
-    for (auto it = _players.begin(); it != _players.end(); it++)
-        if (*it == player)
-            break;
-    
-    assert(it != _players.end());
-    _players.erase(it);
-
-    delete player;
+    player->active = false;
 }
 
 void GameManager::EndContact(b2Contact *contact)
@@ -204,6 +194,19 @@ std::string GameManager::updateGame()
     
     WebSocketSerializer serializer{};
     serializer.serialize(message.mutable_world(), *_world, scorer);
+    
+    const std::lock_guard<std::mutex> lock(_mutex);
+    
+    auto it = _players.begin();
+    while (it != _players.end()) {
+        GOPlayer *player = *it;
+        if (player->active == false) {
+            _players.erase(it++);
+            delete player;
+        } else {
+            ++it;
+        }
+    }
     
     return message.SerializeAsString();
 }
