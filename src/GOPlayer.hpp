@@ -30,6 +30,7 @@ public:
     static GOPlayer *create(GameManager &manager, bool left);
     
 public:
+    int score = 0;
     std::string name{"NONAME"};
 };
 

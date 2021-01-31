@@ -51,9 +51,15 @@ message b2World {
     repeated b2Point points = 5;
 }
 
+message Player {
+    required string name = 1;
+    required uint32 score = 2;
+}
+
 message s2c {
     required b2World world = 1;
     required string scorer = 2;
+    repeated Player players = 3;
 }
 
 message Mouse {

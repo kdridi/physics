@@ -2,6 +2,7 @@ let socket = null
 let state = null
 let font = null
 let lastScorer = ''
+let leaderboard = []
 
 function preload() {
 	font = loadFont('arial.ttf')
@@ -41,15 +42,31 @@ function draw() {
 	background(0)
 
 	if (state !== null) {
-		const { world, scorer } = state
+		const { world, scorer, players } = state
 		if (scorer !== '') {
 			lastScorer = scorer
 		}
 
+		if (players.length > 0) {
+			leaderboard = players
+			console.log(leaderboard)
+			leaderboard.sort((a, b) => b.score - a.score)
+		}
+
+		let i = 0 - (height / 2 - 40)
 		if (font !== null) {
 			fill(255)
 			textFont(font, 18)
-			text(`Last scorer: ${lastScorer}`, 0 - (width / 2 - 30), 0 - (height / 2 - 40))
+			text(`Last scorer: ${lastScorer}`, 0 - (width / 2 - 30), i)
+		}
+
+		for (let index = 0; index < leaderboard.length; index++) {
+			if (i === 3) {
+				break
+			}
+			const { name, score } = leaderboard[index]
+			i += 20
+			text(`${name}: ${score}`, 0 - (width / 2 - 30), i)
 		}
 
 		if (world !== null) {

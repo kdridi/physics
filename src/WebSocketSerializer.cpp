@@ -15,15 +15,12 @@ WebSocketSerializer::~WebSocketSerializer()
 {
 }
 
-std::string WebSocketSerializer::serialize(b2World &world, std::string const& scorer)
+void WebSocketSerializer::serialize(ggj2021::b2World *w, b2World &world, std::string const& scorer)
 {
-    ggj2021::s2c message;
-    message.set_scorer(scorer);
-    this->_world = message.mutable_world();
+    this->_world = w;
     this->SetFlags(b2Draw::e_shapeBit);
     world.SetDebugDraw(this);
     world.DebugDraw();
-    return message.SerializeAsString();
 }
 
 void WebSocketSerializer::DrawPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)

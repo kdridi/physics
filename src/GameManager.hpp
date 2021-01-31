@@ -10,6 +10,8 @@
 
 #include <box2d/box2d.h>
 #include <string>
+#include <list>
+#include <mutex>
 
 class GOPlayer;
 class GOBall;
@@ -54,6 +56,8 @@ private:
     GOGoal *_rgoal = nullptr;
     GOGoal *_lgoal = nullptr;
     b2Vec2 const _dimensions{80.0f, 60.0f};
+    std::mutex _mutex;
+    std::list<GOPlayer *> _players;
 };
 
 #endif /* GameManager_hpp */

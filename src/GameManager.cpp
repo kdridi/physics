@@ -11,6 +11,8 @@
 #include "GOBall.hpp"
 #include "GOGoal.hpp"
 
+#include "proto/box2d.pb.h"
+
 GameManager::GameManager()
 {
     b2Vec2 gravity;
@@ -29,11 +31,24 @@ GameManager::~GameManager()
 
 GOPlayer *GameManager::createPlayer()
 {
-    return GOPlayer::create(*this, true);
+    const std::lock_guard<std::mutex> lock(_mutex);
+    GOPlayer *player = GOPlayer::create(*this, true);
+    _players.push_back(player);
+    return player;
 }
 
 void GameManager::destroyPlayer(GOPlayer *player)
 {
+    const std::lock_guard<std::mutex> lock(_mutex);
+    auto it = _players.begin();
+    
+    for (auto it = _players.begin(); it != _players.end(); it++)
+        if (*it == player)
+            break;
+    
+    assert(it != _players.end());
+    _players.erase(it);
+
     delete player;
 }
 
@@ -159,24 +174,38 @@ void GameManager::destroyGame()
 
 std::string GameManager::updateGame()
 {
-    WebSocketSerializer serializer{};
 
     _world->Step(.030f, 10, 10);
+
+    ggj2021::s2c message;
 
     std::string scorer = "";
     if (_score == true)
     {
         if (_ball != nullptr) {
             auto player = _ball->getScorer();
-            if (player != nullptr)
+            if (player != nullptr) {
+                player->score += 1;
                 scorer = player->name;
+                auto players = message.mutable_players();
+                for(auto p : _players) {
+                    auto pp = players->Add();
+                    pp->set_name(p->name);
+                    pp->set_score(p->score);
+                }
+            }
             destroyBall(_ball);
         }
         _ball = createBall();
         _score = false;
     }
-
-    return serializer.serialize(*_world, scorer);
+    
+    message.set_scorer(scorer);
+    
+    WebSocketSerializer serializer{};
+    serializer.serialize(message.mutable_world(), *_world, scorer);
+    
+    return message.SerializeAsString();
 }
 
 GOBall *GameManager::createBall()
