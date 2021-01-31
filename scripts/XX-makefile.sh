@@ -13,4 +13,4 @@ cd system/$(uname)/makefile
 
 cmake ../../.. \
 	-G "Unix Makefiles"
-make VERBOSE=1
+make VERBOSE=1 -j8

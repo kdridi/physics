@@ -40,16 +40,23 @@ set(EXECUTABLE_NAME "GGJ2021")
 add_executable(${EXECUTABLE_NAME}
   src/proto/box2d.pb.h
   src/proto/box2d.pb.cc
-  src/file_utils.cpp
-  src/file_utils.hpp
-  src/WebSocketMessageCallback.cpp
-  src/WebSocketMessageCallback.hpp
+  src/FileUtils.cpp
+  src/FileUtils.hpp
+  src/WebSocketClientManager.cpp
+  src/WebSocketClientManager.hpp
   src/WebSocketSerializer.cpp
   src/WebSocketSerializer.hpp
   src/WebHTTPServer.cpp
   src/WebHTTPServer.hpp
   src/WebSocketServer.cpp
   src/WebSocketServer.hpp
+  src/GameManager.cpp
+  src/GameManager.hpp
+  src/GameObject.hpp
+  src/GOPlayer.cpp
+  src/GOPlayer.hpp
+  src/WebSocketClient.cpp
+  src/WebSocketClient.hpp
   src/main.cpp
 )
 

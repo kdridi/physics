@@ -6,15 +6,17 @@
 //
 
 #include "WebHTTPServer.hpp"
-#include "file_utils.hpp"
+#include "FileUtils.hpp"
 
 #include <ixwebsocket/IXHttpServer.h>
 #include <iostream>
 
-WebHTTPServer::WebHTTPServer() {
+WebHTTPServer::WebHTTPServer()
+{
 }
 
-WebHTTPServer::~WebHTTPServer() {
+WebHTTPServer::~WebHTTPServer()
+{
 }
 
 void WebHTTPServer::operator()(int port, const char *hostname)

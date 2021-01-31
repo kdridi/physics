@@ -8,11 +8,12 @@
 #ifndef WebHTTPServer_hpp
 #define WebHTTPServer_hpp
 
-class WebHTTPServer {
+class WebHTTPServer
+{
 public:
     WebHTTPServer();
     ~WebHTTPServer();
-    
+
     void operator()(int port, const char *hostname);
 };
 

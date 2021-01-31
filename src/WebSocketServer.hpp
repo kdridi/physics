@@ -8,19 +8,19 @@
 #ifndef WebSocketServer_hpp
 #define WebSocketServer_hpp
 
-#include "WebSocketMessageCallback.hpp"
+#include "WebSocketClientManager.hpp"
 
-class WebSocketServer {
+class WebSocketServer
+{
 public:
     WebSocketServer(WebSocketClientManager &manager);
     ~WebSocketServer();
-    
+
     void operator()(int port, const char *hostname);
     void operator()(std::weak_ptr<ix::WebSocket> ptr, std::shared_ptr<ix::ConnectionState> st);
-    
+
 private:
     WebSocketClientManager &_manager;
 };
-
 
 #endif /* WebSocketServer_hpp */

@@ -15,12 +15,12 @@ WebSocketSerializer::~WebSocketSerializer()
 {
 }
 
-
-std::string WebSocketSerializer::serialize(b2World &world) {
+std::string WebSocketSerializer::serialize(b2World &world)
+{
     ggj2021::b2World w;
-    
+
     this->_world = &w;
-    
+
     this->SetFlags(b2Draw::e_shapeBit);
     world.SetDebugDraw(this);
     world.DebugDraw();

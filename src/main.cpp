@@ -1,6 +1,6 @@
 #include "WebHTTPServer.hpp"
 #include "WebSocketServer.hpp"
-#include "WebSocketMessageCallback.hpp"
+#include "WebSocketClientManager.hpp"
 
 int main()
 {

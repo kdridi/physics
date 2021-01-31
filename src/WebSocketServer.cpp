@@ -12,13 +12,16 @@
 #include <iostream>
 
 WebSocketServer::WebSocketServer(WebSocketClientManager &manager)
-: _manager(manager) {
+    : _manager(manager)
+{
 }
 
-WebSocketServer::~WebSocketServer() {
+WebSocketServer::~WebSocketServer()
+{
 }
 
-void WebSocketServer::operator()(std::weak_ptr<ix::WebSocket> ptr, std::shared_ptr<ix::ConnectionState> st) {
+void WebSocketServer::operator()(std::weak_ptr<ix::WebSocket> ptr, std::shared_ptr<ix::ConnectionState> st)
+{
     if (auto ws = ptr.lock())
     {
         std::stringstream key;
@@ -30,7 +33,8 @@ void WebSocketServer::operator()(std::weak_ptr<ix::WebSocket> ptr, std::shared_p
     }
 }
 
-void WebSocketServer::operator()(int port, const char *hostname) {
+void WebSocketServer::operator()(int port, const char *hostname)
+{
     std::cout << "WS Listening on " << hostname << ":" << port << std::endl;
 
     ix::WebSocketServer server(port, hostname);

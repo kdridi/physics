@@ -17,7 +17,7 @@ class WebSocketSerializer : public b2Draw
 public:
     WebSocketSerializer();
     virtual ~WebSocketSerializer();
-    
+
     std::string serialize(b2World &world);
 
 public:
@@ -28,7 +28,7 @@ public:
     virtual void DrawSegment(const b2Vec2 &p1, const b2Vec2 &p2, const b2Color &color);
     virtual void DrawTransform(const b2Transform &xf);
     virtual void DrawPoint(const b2Vec2 &p, float size, const b2Color &color);
-    
+
 private:
     ggj2021::b2World *_world;
 };
