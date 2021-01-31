@@ -47,7 +47,10 @@ void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
         
         auto playerName = message.playername();
         if (playerName.compare("") != 0) {
-            _player->name = playerName;
+            char buffer[17];
+            memset(buffer, 0, 17);
+            strncpy(buffer, playerName.c_str(), 16);
+            _player->name = std::string{buffer};
         }
 
         break;
