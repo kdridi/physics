@@ -18,80 +18,38 @@ WebSocketClient::~WebSocketClient()
 {
 }
 
-static bool parseMouse(const ix::WebSocketMessagePtr &msg, ggj2021::Mouse &mouse)
-{
-    const std::string prefix{"mp:"};
-    if (msg->str.compare(0, prefix.size(), prefix.c_str()) != 0)
-        return false;
-
-    std::string s = msg->str;
-    std::string delimiter = ":";
-
-    auto position = mouse.mutable_position();
-
-    size_t pos = 0;
-    std::string token;
-    int i = 0;
-    while ((pos = s.find(delimiter)) != std::string::npos)
-    {
-        token = s.substr(0, pos);
-        if (i != 0)
-        {
-            int t = std::stoi(token);
-            switch (i)
-            {
-            case 1:
-                mouse.set_left(t == 1);
-                break;
-            case 2:
-                mouse.set_right(t == 1);
-                break;
-            case 3:
-                position->set_x(t);
-                break;
-            case 4:
-                position->set_y(t);
-                break;
-            default:
-                break;
-            }
-        }
-        s.erase(0, pos + delimiter.length());
-        i += 1;
-    }
-
-    return true;
-}
-
 void WebSocketClient::operator()(const ix::WebSocketMessagePtr &msg)
 {
     switch (msg->type)
     {
     case ix::WebSocketMessageType::Message:
     {
+        ggj2021::c2s message;
+        message.ParseFromString(msg->str);
+        
         float W = 1000.0f;
-        ggj2021::Mouse mouse;
+        if (message.keyboard().compare("ArrowDown") == 0)
+            _player->move(0.0f, 0.0f + W);
+        else if (message.keyboard().compare("ArrowUp") == 0)
+            _player->move(0.0f, 0.0f - W);
+        else if (message.keyboard().compare("ArrowLeft") == 0)
+            _player->move(0.0f - W, 0.0f);
+        else if (message.keyboard().compare("ArrowRight") == 0)
+            _player->move(0.0f + W, 0.0f);
 
-        const std::string prefix{"kp:"};
-        if (msg->str.compare(0, prefix.size(), prefix.c_str()) == 0)
-        {
-            const std::string suffix{msg->str.c_str() + prefix.size()};
-            std::cout << "KEY: [" << suffix << "]" << std::endl;
-            if (suffix.compare("ArrowDown") == 0)
-                _player->move(0.0f, 0.0f + W);
-            else if (suffix.compare("ArrowUp") == 0)
-                _player->move(0.0f, 0.0f - W);
-            else if (suffix.compare("ArrowLeft") == 0)
-                _player->move(0.0f - W, 0.0f);
-            else if (suffix.compare("ArrowRight") == 0)
-                _player->move(0.0f + W, 0.0f);
-        }
-        else if (parseMouse(msg, mouse))
-        {
-            b2Vec2 m{mouse.position().x(), mouse.position().y()};
+        auto mouse = message.mouse();
+        if (mouse.left() == true) {
+            auto position = mouse.position();
+            b2Vec2 m{position.x(), position.y()};
             b2Vec2 p{_player->position()};
             _player->move(W * (m.x - p.x), W * (m.y - p.y));
         }
+        
+        auto playerName = message.playername();
+        if (playerName.compare("") != 0) {
+            _player->name = playerName;
+        }
+
         break;
     }
     case ix::WebSocketMessageType::Open:

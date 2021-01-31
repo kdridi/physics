@@ -163,15 +163,20 @@ std::string GameManager::updateGame()
 
     _world->Step(.030f, 10, 10);
 
+    std::string scorer = "";
     if (_score == true)
     {
-        if (_ball != nullptr)
+        if (_ball != nullptr) {
+            auto player = _ball->getScorer();
+            if (player != nullptr)
+                scorer = player->name;
             destroyBall(_ball);
+        }
         _ball = createBall();
         _score = false;
     }
 
-    return serializer.serialize(*_world);
+    return serializer.serialize(*_world, scorer);
 }
 
 GOBall *GameManager::createBall()

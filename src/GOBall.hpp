@@ -33,6 +33,7 @@ public:
     
 public:
     static GOBall *create(GameManager &manager);
+    GOPlayer *getScorer();
 
 private:
     std::mutex _mutex;

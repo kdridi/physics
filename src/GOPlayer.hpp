@@ -28,6 +28,9 @@ public:
 
 public:
     static GOPlayer *create(GameManager &manager, bool left);
+    
+public:
+    std::string name{"NONAME"};
 };
 
 #endif /* GOPlayer_hpp */

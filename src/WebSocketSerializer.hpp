@@ -18,7 +18,7 @@ public:
     WebSocketSerializer();
     virtual ~WebSocketSerializer();
 
-    std::string serialize(b2World &world);
+    std::string serialize(b2World &world, std::string const& scorer);
 
 public:
     virtual void DrawPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color);

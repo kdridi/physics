@@ -40,3 +40,13 @@ GOBall &GOBall::pushPlayer(GOPlayer *player) {
     
     return (*this);
 }
+
+GOPlayer *GOBall::getScorer() {
+    const std::lock_guard<std::mutex> lock(_mutex);
+    GOPlayer *player = nullptr;
+    for (auto p : _players) {
+        player = p;
+        break;
+    }
+    return player;
+}

@@ -51,6 +51,11 @@ message b2World {
     repeated b2Point points = 5;
 }
 
+message s2c {
+    required b2World world = 1;
+    required string scorer = 2;
+}
+
 message Mouse {
     required b2Vec2 position = 1;
     required bool left = 2;
@@ -59,4 +64,6 @@ message Mouse {
 
 message c2s {
     required Mouse mouse = 1;
+    required string keyboard = 2;
+    required string playerName = 3;
 }

@@ -77,13 +77,24 @@ void WebHTTPServer::operator()(int port, const char *hostname)
             auto response = std::make_shared<ix::HttpResponse>(200, "OK", ix::HttpErrorCode::Ok, headers, payload);
             return response;
         }
-
+        
         if (request->uri.compare("/proto/box2d.proto") == 0)
         {
             ix::WebSocketHttpHeaders headers{};
             headers["Content-Type"] = "text/plain;charset=UTF-8";
 
             std::string payload = FileUtils::GetInstance().getFileContent("/public/proto/box2d.proto");
+
+            auto response = std::make_shared<ix::HttpResponse>(200, "OK", ix::HttpErrorCode::Ok, headers, payload);
+            return response;
+        }
+        
+        if (request->uri.compare("/arial.ttf") == 0)
+        {
+            ix::WebSocketHttpHeaders headers{};
+            headers["Content-Type"] = "application/octet-stream";
+
+            std::string payload = FileUtils::GetInstance().getFileContent("/public/arial.ttf");
 
             auto response = std::make_shared<ix::HttpResponse>(200, "OK", ix::HttpErrorCode::Ok, headers, payload);
             return response;
