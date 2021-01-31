@@ -7,7 +7,7 @@
 
 #include "GOPlayer.hpp"
 
-GOPlayer *GOPlayer::create(GameManager &manager)
+GOPlayer *GOPlayer::create(GameManager &manager, bool left)
 {
     b2PolygonShape shape;
     shape.SetAsBox(1.0, 1.0f);
@@ -24,7 +24,7 @@ GOPlayer *GOPlayer::create(GameManager &manager)
 
     b2FixtureDef fd;
     fd.shape = &shape;
-    fd.filter.categoryBits = LTEAM;
+    fd.filter.categoryBits = PLAYER;
     //        fd.filter.maskBits = LTEAM | RTEAM;
     fd.density = 10.0f;
     fd.restitution = 0.1f;

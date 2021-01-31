@@ -8,6 +8,8 @@
 #include "GameManager.hpp"
 #include "WebSocketSerializer.hpp"
 #include "GOPlayer.hpp"
+#include "GOBall.hpp"
+#include "GOGoal.hpp"
 
 GameManager::GameManager()
 {
@@ -27,7 +29,7 @@ GameManager::~GameManager()
 
 GOPlayer *GameManager::createPlayer()
 {
-    return GOPlayer::create(*this);
+    return GOPlayer::create(*this, true);
 }
 
 void GameManager::destroyPlayer(GOPlayer *player)
@@ -35,28 +37,22 @@ void GameManager::destroyPlayer(GOPlayer *player)
     delete player;
 }
 
-void GameManager::BeginContact(b2Contact *contact)
+void GameManager::EndContact(b2Contact *contact)
 {
     b2Body *ba = contact->GetFixtureA()->GetBody();
     b2Body *bb = contact->GetFixtureB()->GetBody();
-
-    b2Body *other = nullptr;
-    if (ba == _ball)
-        other = bb;
-    if (bb == _ball)
-        other = ba;
-
-    if (other != nullptr)
-    {
-        if (other == _lgoal)
-        {
-            _score = true;
-        }
-        if (other == _rgoal)
-        {
-            _score = true;
-        }
-    }
+    
+    if (GOBall::as(ba) != nullptr && GOPlayer::as(bb) != nullptr)
+        GOBall::as(ba)->pushPlayer(GOPlayer::as(bb));
+    
+    if (GOBall::as(bb) != nullptr && GOPlayer::as(ba) != nullptr)
+        GOBall::as(bb)->pushPlayer(GOPlayer::as(ba));
+    
+    if (GOBall::as(ba) != nullptr && GOGoal::as(bb) != nullptr)
+        _score = true;
+    if (GOBall::as(bb) != nullptr && GOGoal::as(ba) != nullptr)
+        _score = true;
+    
 }
 
 static const float width = 2.0f;
@@ -148,42 +144,12 @@ void GameManager::createGame()
     // goal left
     {
         b2Vec2 dim{width, 5.0f * width};
-
-        b2PolygonShape shape;
-        shape.SetAsBox(dim.x / 2, dim.y / 2);
-
-        b2BodyDef bd;
-        bd.type = b2_staticBody;
-        bd.position.Set(0 - (_dimensions.x - 4.0 * dim.x) / 2.0, 0.0f);
-
-        b2FixtureDef fd;
-        fd.shape = &shape;
-        fd.filter.categoryBits = GOAL;
-        fd.filter.maskBits = RTEAM | BALL;
-        fd.density = 2.0f;
-
-        _lgoal = _world->CreateBody(&bd);
-        _lgoal->CreateFixture(&fd);
+        _lgoal = GOGoal::create(*this, 0 - (_dimensions.x - 4.0 * dim.x) / 2.0, 0.0f, dim.x / 2, dim.y / 2);
     }
     // goal right
     {
         b2Vec2 dim{width, 5.0f * width};
-
-        b2PolygonShape shape;
-        shape.SetAsBox(dim.x / 2, dim.y / 2);
-
-        b2BodyDef bd;
-        bd.type = b2_staticBody;
-        bd.position.Set(0 + (_dimensions.x - 4.0 * dim.x) / 2.0, 0.0f);
-
-        b2FixtureDef fd;
-        fd.shape = &shape;
-        fd.filter.categoryBits = GOAL;
-        fd.filter.maskBits = LTEAM | BALL;
-        fd.density = 2.0f;
-
-        _rgoal = _world->CreateBody(&bd);
-        _rgoal->CreateFixture(&fd);
+        _rgoal = GOGoal::create(*this, 0 + (_dimensions.x - 4.0 * dim.x) / 2.0, 0.0f, dim.x / 2, dim.y / 2);
     }
 }
 
@@ -208,29 +174,12 @@ std::string GameManager::updateGame()
     return serializer.serialize(*_world);
 }
 
-b2Body *GameManager::createBall()
+GOBall *GameManager::createBall()
 {
-    b2CircleShape shape;
-    shape.m_radius = width;
-
-    b2FixtureDef fd;
-    fd.shape = &shape;
-    fd.filter.categoryBits = BALL;
-    fd.filter.maskBits = LTEAM | RTEAM | BOUNDARY | GOAL;
-    fd.density = 1.0f;
-    fd.restitution = 1.0f;
-
-    b2BodyDef bd;
-    bd.type = b2_dynamicBody;
-    bd.position.Set(0.0f, 0.0f);
-
-    b2Body *body = _world->CreateBody(&bd);
-    body->CreateFixture(&fd);
-
-    return body;
+    return GOBall::create(*this);
 }
 
-void GameManager::destroyBall(b2Body *body)
+void GameManager::destroyBall(GOBall *ball)
 {
-    _world->DestroyBody(body);
+    delete ball;
 }

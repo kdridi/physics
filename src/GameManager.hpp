@@ -12,14 +12,15 @@
 #include <string>
 
 class GOPlayer;
+class GOBall;
+class GOGoal;
 
 enum EntityCategory
 {
     BOUNDARY = 0x0001,
-    LTEAM = 0x0002,
-    RTEAM = 0x0004,
-    BALL = 0x0008,
-    GOAL = 0x0010,
+    PLAYER = 0x0002,
+    BALL = 0x0004,
+    GOAL = 0x0008,
 };
 
 class GameManager : public b2ContactListener
@@ -35,11 +36,11 @@ public:
     GOPlayer *createPlayer();
     void destroyPlayer(GOPlayer *player);
 
-    b2Body *createBall();
-    void destroyBall(b2Body *body);
+    GOBall *createBall();
+    void destroyBall(GOBall *body);
 
 public:
-    virtual void BeginContact(b2Contact *contact);
+    virtual void EndContact(b2Contact *contact);
 
 public:
     b2World &world() { return *_world; }
@@ -49,9 +50,9 @@ private:
 
     bool _score = true;
     b2World *_world = nullptr;
-    b2Body *_ball = nullptr;
-    b2Body *_rgoal = nullptr;
-    b2Body *_lgoal = nullptr;
+    GOBall *_ball = nullptr;
+    GOGoal *_rgoal = nullptr;
+    GOGoal *_lgoal = nullptr;
     b2Vec2 const _dimensions{80.0f, 60.0f};
 };
 

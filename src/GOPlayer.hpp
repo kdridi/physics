@@ -12,16 +12,22 @@
 
 class GOPlayer : public GameObject
 {
-public:
+private:
     GOPlayer(GameManager &manager, b2Body &body)
-        : GameObject(manager, body)
+        : GameObject(manager, body, PLAYER)
     {
     }
-
+    
+public:
+    static GOPlayer *as(b2Body *body) {
+        return GameObject::as<GOPlayer>(body, PLAYER);
+    }
+    
+public:
     GOPlayer &move(float x, float y);
 
 public:
-    static GOPlayer *create(GameManager &manager);
+    static GOPlayer *create(GameManager &manager, bool left);
 };
 
 #endif /* GOPlayer_hpp */

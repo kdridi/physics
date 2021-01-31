@@ -57,6 +57,10 @@ add_executable(${EXECUTABLE_NAME}
   src/GOPlayer.hpp
   src/WebSocketClient.cpp
   src/WebSocketClient.hpp
+  src/GOBall.cpp
+  src/GOBall.hpp
+  src/GOGoal.cpp
+  src/GOGoal.hpp
   src/main.cpp
 )
 
