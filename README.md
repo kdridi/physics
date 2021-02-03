@@ -89,3 +89,7 @@ git submodule update --init --recursive
 scripts/install-MacOC.sh
 scripts/XX-xcode.sh
 ```
+
+# Development on gitpod
+
+Please try [this link](https://gitpod.io/#https://github.com/kdridi/physics)
