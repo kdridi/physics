@@ -18,6 +18,9 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+        
+    - name: APT Installation
+      run: apt install -y gdb vim libasan6 libxrandr-dev libxcursor-dev libxi-dev libxinerama-dev git cmake clang libssl-dev zlib1g-dev
 
     - name: Install dependencies
       run: scripts/install-Linux.sh
